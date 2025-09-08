@@ -1,4 +1,4 @@
 ## Assignments
-|  #  | Folder Link | Assignment Description |
-| :-: | ----------- | ---------------------- |
-|  0  | link 0      | description 0          |
+|  #  |  Folder Link  |      Assignment Description     |
+| :-: | ------------- | ------------------------------- |
+| P01 | Shell Project | Implementation of a Basic Shell |
