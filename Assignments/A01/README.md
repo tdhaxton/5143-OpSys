@@ -119,21 +119,21 @@ Run the `shell.py` file and use the following commands...
 - Every command will print help information if the user passes `--help` as an argument.
 
 ## Non-Working Components:
-cp
-mv
-rm
-cat
-head
-tail
-grep
-wc
-chmod
-more
-less
-"<"
-">"
-hfind
-commands with piping
+- `cp`
+- `mv`
+- `rm`
+- `cat`
+- `head`
+- `tail`
+- `grep`
+- `wc`
+- `chmod`
+- `more`
+- `less`
+- `<`
+- `>`
+- `hfind`
+- commands with piping
 
 
 ## References:
