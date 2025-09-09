@@ -45,7 +45,39 @@
 	# - passes the output of one command as input to another
 	# command
 
+import os
 import sys
+import socket 
+import getpass
+from time import sleep
+
+from getch import Getch
+import requests
+from rich import print
+import shutil
+
+getch = Getch()  # create a new instance of class Getch
+username = getpass.getuser() # gets terminal user name
+computer_name = socket.gethostname()
+cwd = os.getcwd()
+prompt = f"{username}@{computer_name}:{cwd}$"
+# print(prompt)
+# sys.argv[0]
+# argc = len(sys.argv)
+# input()
+
+def get_terminal_width():
+    '''
+    Returns the width of the terminal in characters.
+    '''
+    try:
+        size = shutil.get_terminal_size()
+        return size.columns
+    except OSError:
+        # Handle cases where no terminal is connectec (e.g., running in an IDE
+        # without a console)
+        # You can return a default value or raise a custom error here.
+        return 80  # Default to 80 columns if size cannot be determined
 
 def exit():
     '''
@@ -54,8 +86,92 @@ def exit():
     Exits the shell with a status of N. If N is omitted, the exit status 
     is that of the last command executed
     '''
+    print()  # moves next command line to new line
+    raise SystemExit
 
-def ls(argc, argv[]):
+def print_cmd(cmd):
+    '''
+    This function "cleans" off the command line, then prints
+    whatever cmd that is passed to it to the bottom of the terminal.
+    '''
+    padding = " " * get_terminal_width()
+    sys.stdout.write("\r" + padding)
+    sys.stdout.write(f"\r {prompt} {cmd}")
+    sys.stdout.flush()
+
+if __name__ == "__main__":
+    cmd = ""  # empty cmd variable
+
+    print_cmd(cmd)  # print to terminal
+
+    while True:  # loop forever
+
+        char = getch()  # read a character (but don't print)
+
+        if char == "\x03" or cmd == "exit":  # ctrl-c
+            exit()
+        
+        elif char == "\x7f":  # back space pressed
+            cmd = cmd[:-1]
+            print_cmd(cmd)
+
+        elif char in "\x1b":  # arrow key pressed
+            null = getch()  # waste a character
+            direction = getch()  # grab the direction
+
+            if direction in "A":  # up arrow pressed
+                # get the PREVIOUS command from your history (if there is one)
+                # prints out 'up' then erases it (just to show something)
+                cmd += "\u2191"
+                print_cmd(cmd)
+                sleep(0.3)
+                # cmd = cmd[:-1]
+
+            if direction in "B":  # down arrow pressed
+                # get the NEXT command from history (if there is one)
+                # prints out 'down' then erases it (just to show something)
+                cmd += "\u2193"
+                print_cmd(cmd)
+                sleep(0.3)
+                # cmd = cmd[:-1]
+
+            if direction in "C":  # right arrow pressed
+                # move the cursor to the right on your command prompt line
+                # prints out 'right' then erases it (just to show something)
+                cmd += "\u2192"
+                print_cmd(cmd)
+                sleep(0.3)
+                # cmd = cmd[:-1]
+
+            if direction in "D":  # left arrow pressed
+                # moves the cursor to the left on your command prompt line
+                # prints out 'left' then erases it (just to show something)
+                cmd += "\u2190"
+                print_cmd(cmd)
+                sleep(0.3)
+                # cmd = cmd[:-1]
+
+            print_cmd(cmd)  # print the command (again)
+
+        elif char in "\r":  # return pressed
+
+            # This 'elif' simulates something "happening" after pressing return
+            cmd = "Executing command...."  #
+            print_cmd(cmd)
+            sleep(1)
+
+            ## YOUR CODE HERE
+            ## Parse the command
+            ## Figure out what your executing like finding pipes and redirects
+
+            cmd = ""  # reset command to nothing (since we just executed it)
+
+            print_cmd(cmd)  # now print empty cmd prompt
+        else:
+            cmd += char  # add typed character to our "cmd"
+            print_cmd(cmd)  # print the cmd out
+
+def ls():
     '''
     Usage: ls [OPTION]... [FILE]...
     List information about FILEs (the current directory by default).
@@ -224,12 +340,3 @@ def chmod():
     Usage: chmod OCTAL-MODE FILE...
     Change the mode of each FILE to MODE.
     '''
-
-import os
-import socket   
-username = os.getlogin()
-computer_name = socket.gethostname()
-cwd = os.getcwd()
-print(username, "@", computer_name, ":",  cwd, "$", sys.argv[0])
-argc = len(sys.argv)
-input()
