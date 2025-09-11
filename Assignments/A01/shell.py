@@ -112,7 +112,7 @@ def exit():
     Exits the shell with a status of N. If N is omitted, the exit status 
     is that of the last command executed
     '''
-    print()  # moves next command line to new line
+    print(f"{Fore.GREEN}Okay Bye")  # moves next command line to new line
     raise SystemExit
 
 # Helper function for ls_with_args
@@ -998,11 +998,6 @@ def print_cmd(cmd, cursor_pos=0):
     whatever cmd that is passed to it to the bottom of the terminal.
     '''
     
-    # username = getpass.getuser() # gets terminal user name
-    # computer_name = socket.gethostname()
-    # cwd = os.getcwd()
-    # prompt = f"{username}@{computer_name}:{cwd}$"
-    
     # Update prompt info with current data 
     username = getpass.getuser()
     computer_name = socket.gethostname()
@@ -1014,13 +1009,18 @@ def print_cmd(cmd, cursor_pos=0):
     #padding = " " * get_terminal_width()
     #sys.stdout.write("\r" + padding)
     
+    
+    # Move cursor to start, print prompt + command
     sys.stdout.write("\r")
     sys.stdout.write(f"{prompt}{cmd}")
+    
+    # Clear everything to the right of the cursor
     sys.stdout.write("\033[K")
     
-    # Move cursor to correct position
-    # go to start
+    # Move cursor to start
     sys.stdout.write("\r")
+    
+    # Move cursor to the right the length of the prompt plus cursor position, and flush
     sys.stdout.write(f"\033[{visible_length(prompt) + cursor_pos}C")
     sys.stdout.flush()
 
@@ -1123,7 +1123,6 @@ if __name__ == "__main__":
                     cursor_pos -= 1
                 print_cmd(cmd, cursor_pos)
 
-            print_cmd(cmd)  # print the command (again)
 
         elif char in "\r":  # return pressed
             
