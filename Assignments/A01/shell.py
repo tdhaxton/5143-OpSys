@@ -582,7 +582,7 @@ def mkdir(parts):
         
     return output
 
-def cd(dir):
+def cd(parts):
     '''
     Change the shell working directory.
 
@@ -600,31 +600,6 @@ def cd(dir):
 
     Exit Status:
     Returns 0 if the directory is changed; non-zero otherwise.
-    '''
-
-def pwd():
-    '''
-    Print the name of the current working directory.
-
-    Exit Status:
-    Returns 0 unless an invalid option is given or the current directory
-    cannot be read
-    '''
-
-    output = {"output" : None, "error" : None}
-    
-    # Storing cwd
-    cwd = os.getcwd()
-    
-    # Storing it into output dictionary and returning
-    output["output"] = cwd 
-    return output
-
-def cp(parts):
-    '''
-    Copy SOURCE to DEST.
-
-          --help        display this help and exit
     '''
 
     # These are lists
@@ -673,6 +648,31 @@ def cp(parts):
         
     # Returning output dictionary
     return output
+
+def pwd():
+    '''
+    Print the name of the current working directory.
+
+    Exit Status:
+    Returns 0 unless an invalid option is given or the current directory
+    cannot be read
+    '''
+
+    output = {"output" : None, "error" : None}
+    
+    # Storing cwd
+    cwd = os.getcwd()
+    
+    # Storing it into output dictionary and returning
+    output["output"] = cwd 
+    return output
+
+def cp():
+    '''
+    Copy SOURCE to DEST.
+
+          --help        display this help and exit
+    '''
 
 def mv(file1, file2):
     '''
