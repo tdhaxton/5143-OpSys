@@ -1052,6 +1052,7 @@ if __name__ == "__main__":
 
         # Exit shell on ctrl-c command
         if char == "\x03":
+            print()
             exit()
 
         # If back space pressed, remove the character to the left of the cursor
