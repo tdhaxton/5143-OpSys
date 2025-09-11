@@ -58,7 +58,7 @@ from time import sleep
 from getch import Getch
 from colorama import init, Fore, Style
 import requests
-from rich import print
+#from rich import print
 import shutil
 import re
 
@@ -997,18 +997,31 @@ def print_cmd(cmd, cursor_pos=0):
     This function "cleans" off the command line, then prints
     whatever cmd that is passed to it to the bottom of the terminal.
     '''
+    
     # username = getpass.getuser() # gets terminal user name
     # computer_name = socket.gethostname()
     # cwd = os.getcwd()
     # prompt = f"{username}@{computer_name}:{cwd}$"
-    prompt = f"{Fore.CYAN}{os.getcwd()}{Style.RESET_ALL}$ "
-    padding = " " * get_terminal_width()
-    sys.stdout.write("\r" + padding)
-    sys.stdout.write(f"\r {prompt} {cmd}")
+    
+    # Update prompt info with current data 
+    username = getpass.getuser()
+    computer_name = socket.gethostname()
+    cwd = os.getcwd()
+    
+    # Storing built prompt
+    prompt = f"{Fore.CYAN}{username}@{computer_name}:{cwd}{Style.RESET_ALL}$ "
+    
+    #padding = " " * get_terminal_width()
+    #sys.stdout.write("\r" + padding)
+    
+    sys.stdout.write("\r")
+    sys.stdout.write(f"{prompt}{cmd}")
     sys.stdout.write("\033[K")
+    
     # Move cursor to correct position
-    sys.stdout.write("\r")                               # go to start
-    sys.stdout.write(f"\033[{visible_length(prompt) + cursor_pos}C")  # move cursor to position
+    # go to start
+    sys.stdout.write("\r")
+    sys.stdout.write(f"\033[{visible_length(prompt) + cursor_pos}C")
     sys.stdout.flush()
 
 #######################  Beginning of Main  ###########################
