@@ -115,20 +115,6 @@ def exit():
     print()  # moves next command line to new line
     raise SystemExit
 
-def print_cmd(cmd, cursor_pos=0):
-    '''
-    This function "cleans" off the command line, then prints
-    whatever cmd that is passed to it to the bottom of the terminal.
-    '''
-    username = getpass.getuser() # gets terminal user name
-    computer_name = socket.gethostname()
-    cwd = os.getcwd()
-    prompt = f"{username}@{computer_name}:{cwd}$"
-    padding = " " * get_terminal_width()
-    sys.stdout.write("\r" + padding)
-    sys.stdout.write(f"\r {prompt} {cmd}")
-    sys.stdout.flush()
-
 # Helper function for ls_with_args
 def color_filename(item, full_path):
     '''
@@ -1005,6 +991,25 @@ def visible_length(s):
     # len(...) -> Counts only the visible characters, ignoring color codes
     ansi_escape = re.compile(r'\x1b\[[0-9;]*m')
     return len(ansi_escape.sub('', s))
+
+def print_cmd(cmd, cursor_pos=0):
+    '''
+    This function "cleans" off the command line, then prints
+    whatever cmd that is passed to it to the bottom of the terminal.
+    '''
+    # username = getpass.getuser() # gets terminal user name
+    # computer_name = socket.gethostname()
+    # cwd = os.getcwd()
+    # prompt = f"{username}@{computer_name}:{cwd}$"
+    prompt = f"{Fore.CYAN}{os.getcwd()}{Style.RESET_ALL}$ "
+    padding = " " * get_terminal_width()
+    sys.stdout.write("\r" + padding)
+    sys.stdout.write(f"\r {prompt} {cmd}")
+    sys.stdout.write("\033[K")
+    # Move cursor to correct position
+    sys.stdout.write("\r")                               # go to start
+    sys.stdout.write(f"\033[{visible_length(prompt) + cursor_pos}C")  # move cursor to position
+    sys.stdout.flush()
 
 #######################  Beginning of Main  ###########################
 if __name__ == "__main__":
