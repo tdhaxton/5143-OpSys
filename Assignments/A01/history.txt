@@ -1,3 +1,6 @@
 ls
 cd ..
 cd 5143-OpSys
+cd
+cd /projects/5143-OpSys
+s~exit
