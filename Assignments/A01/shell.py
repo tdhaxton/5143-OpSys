@@ -692,9 +692,28 @@ def cat(file):
     Usage: cat [FILE]...
 
     Example:
-        cat f - g   Output f's contents, t hen standard input, then g's contents.
+        cat f - g   Output f's contents, then standard input, then g's contents.
         cat         Copy standard input to standard output.
     '''
+    output = {"output": None, "error": None}
+
+     #if no file provided, read from stdin once
+    if not file:
+        output["output"] = sys.stdin.read()
+        return output
+    for f in file:
+        if f == '-':
+            #read from standard input here
+            output["output"] = sys.stdin.read()
+        else:
+            try:
+                with open(f,'r') as file_handle:
+                    output["output"] = file_handle.read()
+            except FileNotFoundError:
+                output["error"] = f"cat: {f}: No such file or directory\n"
+            except Exception as e:
+                output["error"] = f"cat: {f}: {str(e)}\n"
+    return output
 
 def head():
     '''
@@ -798,10 +817,18 @@ def history(parts):
     if not input and not flags and not params:
         
         # Get the absolute path of the folder where the script is located
-        script_dir = os.path.dirname(os.path.abspath(__file__))
+        # script_dir = os.path.dirname(os.path.abspath(__file__))
 
-        # Build the full path to history.txt inside your repo
-        history_file = os.path.join(script_dir, "history.txt")
+        # Get the absolute path of the user's home directory
+        home_dir = os.path.dirname("~")
+
+        # # Move history file if it is located in folder where script is 
+        # # located
+        # if os.path.exists("history.txt"):
+        #     shutil.move("history.txt", home_dir)
+        # else:
+        #     # Build the full path to history.txt inside the home directory
+        history_file = os.path.join(home_dir, "history.txt")
 
         history_list = []
         command_number = 1
@@ -866,6 +893,9 @@ def help(parts):
 
         if cmd == "mkdir":
             output["output"] = mkdir.__doc__
+        
+        if cmd == "cat":
+            output["output"] = cat.__doc__
         '''
         if cmd == "cp":
             output["output"] = cp.__doc__
@@ -875,9 +905,6 @@ def help(parts):
 
         if cmd == "rm":
             output["output"] = rm.__doc__
-
-        if cmd == "cat":
-            output["output"] = cat.__doc__
 
         if cmd == "head":
             output["output"] = head.__doc__
@@ -927,11 +954,11 @@ def get_history_rev():
         List of all commands in history file.
     """
     
-    # Get the absolute path of the folder where the script is located
-    script_dir = os.path.dirname(os.path.abspath(__file__))
+    # Get the absolute path of the user's home directory
+    home_dir = os.path.dirname("~")
 
     # Build the full path to history.txt inside your repo
-    history_file = os.path.join(script_dir, "history.txt")
+    history_file = os.path.join(home_dir, "history.txt")
 
     # Check if history file exists
     if os.path.exists(history_file):
@@ -995,12 +1022,12 @@ def write_to_history(cmd):
     # so you can access it later with the up/down arrows
     '''
           
-    # Get the absolute path of the folder where the script is located
+    # Get the absolute path of the user's home directory
     # Since this script and the history file are in the same directory:
-    script_dir = os.path.dirname(os.path.abspath(__file__))
+    home_dir = os.path.dirname("~")
 
     # Build the full path to history.txt inside your repo
-    history_file = os.path.join(script_dir, "history.txt")
+    history_file = os.path.join(home_dir, "history.txt")
 
     # Append command to the file
     with open(history_file, "a") as file:
@@ -1282,6 +1309,9 @@ if __name__ == "__main__":
                         result = mkdir(command)
                     elif command.get("cmd") == "history":
                         result = history(command)
+                    elif command.get("cmd") == "cat":
+                        file = command.get("params")
+                        result = cat(file)
                             
                 # Printing result to screen
                 if result["error"]:
