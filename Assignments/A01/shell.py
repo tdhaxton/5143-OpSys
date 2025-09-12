@@ -323,7 +323,7 @@ def ls(parts):
         all_directory_list = get_directory_items(ls_directory, include_hidden = True)
         
         # Using -h alone prints the same as no args
-        if option == "h": 
+        if option == "-h": 
             
             # list to store items
             items = []
@@ -343,7 +343,7 @@ def ls(parts):
                 
                 
         # Using -a alone or with -h prints all files including hidden
-        elif option in ("a","ah", "ha"):
+        elif option in ("-a","-ah", "-ha"):
             
             # list to store directory items
             items = []
@@ -365,7 +365,7 @@ def ls(parts):
             return output
             
         # Using -l alone
-        elif option == "l":
+        elif option == "-l":
             
             items = []
             total_size = 0
@@ -401,7 +401,7 @@ def ls(parts):
         
             
         # Using -al or -la prints all files in long format
-        elif option in ("al", "la"):
+        elif option in ("-al", "-la"):
                 
             total_size = 0
             items = []
@@ -436,7 +436,7 @@ def ls(parts):
             return output
             
         # Using -lh or -hl prints files in long format with human readable sizes
-        elif option in ("lh", "hl"):
+        elif option in ("-lh", "-hl"):
             
             total_size = 0
             items = []
@@ -472,7 +472,7 @@ def ls(parts):
             return output
             
         # Using -alh or any combo of those three prints all files in long format with human readable sizes
-        elif option in ("alh", "ahl", "lah", "lha", "hal", "hla"):
+        elif option in ("-alh", "-ahl", "-lah", "-lha", "-hal", "-hla"):
             
             total_size = 0
             items = []
@@ -616,17 +616,20 @@ def cd(parts):
     
         
     # User wants to go to home directory
-    if str_params == "":
+    if str_params == "" or str_params == "~":
         homedir = os.path.expanduser("~")
         os.chdir(homedir)
+        return output
         
-        # User wants to go to parent directory
+    # User wants to go to parent directory
     if str_params == "..":
         os.chdir("..")
+        return output
             
     # User wants to go to differnt directory
     elif os.path.isdir(str_params):
         os.chdir(str_params)
+        return output
             
     # If path doesn't exist and params isn't empty
     elif not os.path.isdir(str_params) and str_params != "":
@@ -635,7 +638,7 @@ def cd(parts):
     # Returning output dictionary
     return output
 
-def pwd():
+def pwd_():
     '''
     Print the name of the current working directory.
 
@@ -837,6 +840,79 @@ def history(parts):
     else:
         output["error"] = "Error, history command must not have any params, input, or flags."
     
+def help(parts):
+    '''
+    input: dict({"input" : None, "cmd" : None, "params" : [], "flags" : None, "error" : None})
+    output dict: {"output" : string, "error" : string}
+    '''
+    
+    input  = parts.get("input", None)
+    flags  = parts.get("flags", None)
+    params = parts.get("params", None)
+    cmd    = parts.get("cmd", None)
+    
+    output = {"output" : None, "error" : None}
+    
+    print("    ------------------------------", end= " ")
+    
+    if not input and not params and flags == "--help":
+        if cmd == "cd":
+            output["output"] = cd.__doc__
+        if cmd == "ls":
+            output["output"] = ls.__doc__
+
+        if cmd == "pwd":
+            output["output"] = pwd_.__doc__
+
+        if cmd == "mkdir":
+            output["output"] = mkdir.__doc__
+        '''
+        if cmd == "cp":
+            output["output"] = cp.__doc__
+
+        if cmd == "mv":
+            output["output"] = mv.__doc__
+
+        if cmd == "rm":
+            output["output"] = rm.__doc__
+
+        if cmd == "cat":
+            output["output"] = cat.__doc__
+
+        if cmd == "head":
+            output["output"] = head.__doc__
+
+        if cmd == "tail":
+            output["output"] = tail.__doc__
+
+        if cmd == "grep":
+            output["output"] = grep.__doc__
+
+        if cmd == "wc":
+            output["output"] = wc.__doc__
+
+        if cmd == "chmod":
+            output["output"] = chmod.__doc__
+
+        if cmd == "history":
+            output["output"] = history.__doc__
+
+        if cmd == "exit":
+            output["output"] = exit_shell.__doc__
+
+        if cmd == "more":
+            output["output"] = more.__doc__
+
+        if cmd == "less":
+            output["output"] = less.__doc__
+
+        '''
+        
+        output["output"] += "------------------------------"
+        return output
+    else:
+        output["error"] = f"Error, help for command {cmd} could not be found."
+        return output
     
 def get_history_rev():
     """
@@ -879,7 +955,6 @@ def get_history_rev():
         # History file doesn't exist
         return None
     
-    
 # This functions works as the !x command
 def cmd_from_history(index):
     '''
@@ -913,7 +988,6 @@ def cmd_from_history(index):
     else:
         output["error"] = f"Error. There are only {len(h_cmds)} commands in history."
         return output
-       
        
 def write_to_history(cmd):
     '''
@@ -961,7 +1035,7 @@ def parse_cmd(cmd_input):
         for item in subparts[1:]:
             
             if item.startswith("-"):
-                d["flags"] = item[1:]
+                d["flags"] = item
             else:
                 d["params"].append(item)
                 
@@ -1033,6 +1107,11 @@ if __name__ == "__main__":
     # Print welcome message
     WelcomeMessage()
     
+    # List of commands user may request to execute
+    available_commands = ["ls", "pwd", "mkdir", "cd", "cp", "mv", "rm", "cat",
+                          "head", "tail", "grep", "wc", "chmod", "history",
+                          "exit", "more", "less"]
+    
     # Empty cmd variable
     cmd = ""
     
@@ -1062,49 +1141,45 @@ if __name__ == "__main__":
                 cursor_pos -= 1
             print_cmd(cmd, cursor_pos)
 
-        elif char in "\x1b":  # arrow key pressed
-            null = getch()  # waste a character
-            direction = getch()  # grab the direction
+        # User pressed arror key, remove that input and get direction
+        elif char in "\x1b":
+            null = getch()
+            direction = getch()
             
             # Get updated history if avaible
             h_cmd = get_history_rev() or []
 
-            if direction in "A":  # up arrow pressed
+            # Up arror pressed
+            if direction in "A":
                 
                 # Get list of history commands
                 if h_cmd and history_index < len(h_cmd) - 1:
                     
-                    # Get the previous command from history depending on
-                    # history_index and increment index
+                    # Get the previous command from history
                     history_index += 1
                     cmd = h_cmd[history_index]
                     
                     
                 # If at the end of history, stay there
                 else:
-                    # already at the oldest command
-                    # so set cmd to end of h_cmd list
                     cmd = h_cmd[-1]
                     
                 # Moving cursor to length of new cmd and print cmd
                 cursor_pos = len(cmd)
                 print_cmd(cmd, cursor_pos)
 
-            if direction in "B":  # down arrow pressed
+            # Down arror pressed
+            if direction in "B":
                 
-                # get the NEXT command from history (if there is one)
+                # get the next command from history
                 if h_cmd and history_index > 0:
                     
-                    # Get the previous command from history depending on
-                    # history_index and decrement index
+                    # Get previous command
                     history_index -= 1
                     cmd = h_cmd[history_index]
-
-                    
+  
                 # At the newest, go to blank like
                 else:
-                    
-                    # Getting a blank line
                     history_index = -1
                     cmd = ""
                     
@@ -1112,24 +1187,29 @@ if __name__ == "__main__":
                 cursor_pos = len(cmd)
                 print_cmd(cmd, cursor_pos)
 
-            if direction in "C":  # right arrow pressed
-                # move the cursor to the right on your command prompt line
+            # Right arrow pressed
+            if direction in "C":
+                
+                # Move cursor to the right
                 if cursor_pos < len(cmd):
                     cursor_pos += 1
                 print_cmd(cmd, cursor_pos)
 
-            if direction in "D":  # left arrow pressed
-                # moves the cursor to the left on your command prompt line
+            # Left arrow pressed
+            if direction in "D":
+                
+                # Move cursor to the left
                 if cursor_pos > 0:
                     cursor_pos -= 1
                 print_cmd(cmd, cursor_pos)
 
-
-        elif char in "\r":  # return pressed
+        # Return character pressed
+        elif char in "\r":
             
-            # Printing blank line to info isn't overwritten
+            # Printing blank line so info isn't overwritten
             print()
             
+            # Exit
             if cmd == "exit":
                 exit()
                 
@@ -1176,17 +1256,23 @@ if __name__ == "__main__":
                     # Pop first command off of the command list
                     command = command_list.pop(0)
                     
+                    # Making sure valid command
+                    if command.get("cmd") not in available_commands:
+                        result["error"] = f"Error. command '{command.get("cmd")}' is not in list of avaiable commands."                    
+                    
                     # Kill execution if error
                     if result["error"]:
                         break
 
-                        
-                    if command.get("cmd") == "cd":
+                    # Executing commands
+                    if command.get("flags") == "--help" and not command.get("params") and not command.get("input"):
+                        result = help(command)     
+                    elif command.get("cmd") == "cd":
                         result = cd(command)
                     elif command.get("cmd") == "ls":
                         result = ls(command)
                     elif command.get("cmd") == "pwd":
-                        result = pwd()
+                        result = pwd_()
                     elif command.get("cmd") == "mkdir":
                         result = mkdir(command)
                     elif command.get("cmd") == "history":
