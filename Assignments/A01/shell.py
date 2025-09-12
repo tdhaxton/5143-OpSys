@@ -1258,7 +1258,12 @@ if __name__ == "__main__":
                     
                     # Making sure valid command
                     if command.get("cmd") not in available_commands:
-                        result["error"] = f"Error. command '{command.get("cmd")}' is not in list of avaiable commands."                    
+                        result["error"] = f"Error. command '{command.get("cmd")}' is not in list of avaiable commands."
+                        
+                    # If there is output in the previous command
+                    # make the output to the previous command the input to the next
+                    # if result["output"]
+                        #command["input"] = result["output"]                    
                     
                     # Kill execution if error
                     if result["error"]:
@@ -1277,7 +1282,6 @@ if __name__ == "__main__":
                         result = mkdir(command)
                     elif command.get("cmd") == "history":
                         result = history(command)
-
                             
                 # Printing result to screen
                 if result["error"]:
