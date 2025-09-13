@@ -1288,10 +1288,10 @@ if __name__ == "__main__":
                     if command.get("cmd") not in available_commands:
                         result["error"] = f"Error. command '{command.get("cmd")}' is not in list of avaiable commands."
                         
-                    # If there is output in the previous command
+                    # If there is output in the previous command and command has not input
                     # make the output to the previous command the input to the next
-                    # if result["output"]
-                        #command["input"] = result["output"]                    
+                    if result["output"] and not command["input"]:
+                        command["input"] = result["output"]                   
                     
                     # Kill execution if error
                     if result["error"]:
