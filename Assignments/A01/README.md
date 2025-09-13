@@ -95,12 +95,12 @@ Run the `shell.py` file and use the following commands...
 | `cp file1 file2`      | Copy file1 to file2.                                |          |
 | `mv file1 file2`      | Move or rename file1 to file2.                      |          |
 | `rm -r`               | Recursively delete a directory.                     |          |
-| `cat file`            | Display contents of a file.                         |          |
+| `cat file`            | Display contents of a file.                         | Harika Vemulapalli |
 | `head -n`             | Display the first n lines of a file.                |          |
 | `tail -n`             | Display the last n lines of a file.                 |          |
 | `grep 'pattern' file` | Search for a pattern in a file.                     |          |
-| `wc -l`               | Count lines in a file.                              |          |
-| `wc -w`               | Count words in a file.                              |          |
+| `wc -l`               | Count lines in a file.                              | Cooper   |
+| `wc -w`               | Count words in a file.                              | Cooper   |
 | `chmod xxx`           | Change file permissions.                            |          |
 | `history`             | Show previously used commands.                      | Cooper   |
 | `!x`                  | Re-run command number *x* from history.             | Cooper   |
