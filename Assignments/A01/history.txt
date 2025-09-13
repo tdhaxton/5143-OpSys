@@ -6,3 +6,5 @@ cd --help
 test
 cd ~
 cd ~
+ls - lah
+ls -lah
