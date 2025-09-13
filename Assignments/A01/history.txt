@@ -8,3 +8,10 @@ cd ~
 cd ~
 ls - lah
 ls -lah
+ls | wc
+ls
+wc -lw history.txt
+wc --help
+wc --help | wc
+clear
+clear

@@ -763,15 +763,13 @@ def grep():
     if any error occurs, the exit status is 2.
     '''
 
-def wc():
+def wc(parts):
     '''
     Usage: wc [OPTION]... [FILE]...
       or:  wc [OPTION]... --files0-from=F
     Print newline, word, and byte counts for each FILE, and a total line if
     more than one FILE is specified. A word is a non-zero-length sequence of
     printable characters delimited by a white space.
-
-    With no FILE, or when FILE is -, read standard input.
 
     The options below may be used to select which counts are printed, always in
     the following order: newline, word, character, byte, maximum line length.
@@ -784,6 +782,186 @@ def wc():
                                 When can be: auto, always, only, never
             --help      display this help and exit
     '''
+    
+    # Getting parsed commands from parts dictionary
+    input  = parts.get("input", None)
+    flags  = parts.get("flags", None)
+    params = parts.get("params", None)
+    
+    # Dictionary to store output
+    output = {"output" : None, "error" : None}
+    
+    # If multiple parameters
+    if len(params) > 1:
+        output["error"] = f"{Fore.RED}Error: 'wc' can only take one parameter.{Style.RESET_ALL} \nRun 'wc --help' for more info."
+        return output
+    
+    # Variables to store count
+    line_count = 0
+    word_count = 0
+    char_count = 0
+    
+    # Convert params to string
+    if params:
+        params = "".join(params)
+        params = params.strip("'")
+        
+    # Convert input to string
+    if input:
+        input = "".join(input)
+        input = input.strip("'")
+        
+    # Filtering out bad commands
+    if not params and not input:
+        output["error"] = f"{Fore.RED}Error: 'wc' needs either an input file or parameter file to process.{Style.RESET_ALL} \nRun 'wc --help' for more info."
+        return output
+    if params and input:
+        output["error"] = f"{Fore.RED}Error: 'wc' needs either an input file or parameter file to process.{Style.RESET_ALL} \nRun 'wc --help' for more info."
+        return output
+    if flags and flags not in ["-w", "-l", "-wl", "-lw"]:
+        output["error"] = f"{Fore.RED}Error: {flags} is not a viable flag.{Style.RESET_ALL} Run 'wc --help' for flag options"
+        return output
+    
+    # Storing either the input or params to check if its a file or string
+    item = input or params
+    
+    # Determine if item is a file
+    if os.path.isfile(item):
+        
+        # Seeing if file is an absolute path
+        if os.path.isabs(item):
+            
+            # Getting the absolute path from argument
+            path = item
+
+        # if relative path, join with current working directory
+        elif not os.path.isabs(item):
+            
+            # Building absolute path
+            new_dir = item
+            cwd     = os.getcwd()
+            path    = os.path.join(cwd, new_dir)
+            
+        # If user gave a directory path with flags
+        if flags and path:
+            
+            # Get countswhat
+            with open(path, 'r') as file:
+                for line in file:
+                    if "l" in flags:
+                        line_count += 1
+                    if "w" in flags:
+                        words = line.split()
+                        word_count += len(words)
+            
+            # Getting correct data to output | Code from ChatGPT           
+            output_values = []
+            output_values.append(str(line_count) if "l" in flags else None)
+            output_values.append(str(word_count) if "w" in flags else None)
+                            
+            # Store results to output and return | Code from ChatGPT
+            output["output"] = " ".join(filter(None, output_values))
+            return output
+            
+        # If user gave directory path without flags
+        if not flags and path:
+            
+            # Get counts
+            with open(path, 'r') as file:
+                for line in file:
+                    line_count += 1
+                    words = line.split()
+                    word_count += len(words)
+                    char_count += len(line)
+                            
+            # Store results to output and return
+            output["output"] = f"{line_count} {word_count} {char_count} {input or params}"
+            return output            
+            
+    # Determine if item is a string and its from input
+    elif isinstance(item, str) and input and not params:
+        
+        # Split string in lines first 
+        lines = item.splitlines()
+        
+        # Removes characters used to color text
+        ansi_escape = re.compile(r'\x1b\[[0-9;]*m')
+        item = ansi_escape.sub('', item)
+        
+        # Split string in lines first
+        lines = item.splitlines()
+    
+        # If user ran pipe and command before wc returned a string
+        # and there are flags
+        # Example: ls -la | wc -l
+        if flags and item:
+            
+            # Getting line count
+            if "l" in flags:
+                
+                # If item has multiple lines get length
+                if len(lines) > 1:
+                    line_count = len(lines)
+                    
+                # Else its just one line
+                else:
+                    line_count = 1
+                    
+            # Getting word count
+            if "w" in flags:
+                
+                # Count words in each line
+                if len(lines) > 1:
+                    for line in lines:
+                        for words in line.split():
+                            word_count += len(words)
+                            
+                # Only one line      
+                else:
+                    word_count = len(lines)
+                            
+            # Getting correct data to output | Code from ChatGPT           
+            output_values = []
+            output_values.append(str(line_count) if "l" in flags else None)
+            output_values.append(str(word_count) if "w" in flags else None)
+                            
+            # Store results to output and return | Code from ChatGPT
+            output["output"] = " ".join(filter(None, output_values))
+            return output
+            
+        # If user ran wc without flags
+        # Example wc fruit.txt or ls | wc
+        if not flags and item:
+            
+            # If item has multiple lines cound them
+            if len(lines) > 1:
+                line_count = len(lines)
+                
+            # If item has one line only add one
+            else:
+                line_count = 1
+                
+            # Count words in each line
+            if len(lines) > 1:
+                for line in lines:
+                    for words in line.split():
+                        word_count += len(words)
+            
+            # Just a one line string       
+            else:
+                word_count = len(lines)
+            
+            # Count all characters in string
+            char_count = len(item)
+                            
+            # Store results to output and return
+            output["output"] = f"{line_count} {word_count} {char_count}"
+            return output
+    
+    # item was not a string or file
+    else:
+        output["error"] = f"{Fore.RED}Error: {item}: No such file or directory.{Style.RESET_ALL}\nRun 'wc --help' for more info."
+        return output
 
 def chmod():
     '''
@@ -874,18 +1052,23 @@ def help(parts):
     output dict: {"output" : string, "error" : string}
     '''
     
+    # Getting parsed command from parts dictionary
     input  = parts.get("input", None)
     flags  = parts.get("flags", None)
     params = parts.get("params", None)
     cmd    = parts.get("cmd", None)
     
+    # dictionary to store output
     output = {"output" : None, "error" : None}
     
     print("    ------------------------------", end= " ")
     
+    # If user only typed command followed by '--help'
     if not input and not params and flags == "--help":
+        
         if cmd == "cd":
             output["output"] = cd.__doc__
+            
         if cmd == "ls":
             output["output"] = ls.__doc__
 
@@ -897,6 +1080,9 @@ def help(parts):
         
         if cmd == "cat":
             output["output"] = cat.__doc__
+            
+        if cmd == "wc":
+            output["output"] = wc.__doc__
         '''
         if cmd == "cp":
             output["output"] = cp.__doc__
@@ -915,9 +1101,6 @@ def help(parts):
 
         if cmd == "grep":
             output["output"] = grep.__doc__
-
-        if cmd == "wc":
-            output["output"] = wc.__doc__
 
         if cmd == "chmod":
             output["output"] = chmod.__doc__
@@ -938,8 +1121,10 @@ def help(parts):
         
         output["output"] += "------------------------------"
         return output
+    
+    # User ran invalid help command
     else:
-        output["error"] = f"Error, help for command {cmd} could not be found."
+        output["error"] = f"{Fore.RED}Error: help for command {cmd} could not be found.{Style.RESET_ALL}"
         return output
     
 def get_history_rev():
@@ -1138,7 +1323,7 @@ if __name__ == "__main__":
     # List of commands user may request to execute
     available_commands = ["ls", "pwd", "mkdir", "cd", "cp", "mv", "rm", "cat",
                           "head", "tail", "grep", "wc", "chmod", "history",
-                          "exit", "more", "less"]
+                          "exit", "more", "less", "clear"]
     
     # Empty cmd variable
     cmd = ""
@@ -1313,6 +1498,8 @@ if __name__ == "__main__":
                     elif command.get("cmd") == "cat":
                         file = command.get("params")
                         result = cat(file)
+                    elif command.get("cmd") == "wc":
+                        result = wc(command)
                             
                 # Printing result to screen
                 if result["error"]:
