@@ -264,8 +264,9 @@ def ls(parts):
     # Used to store directory from params
     ls_directory = ""
     
+    # ls should not have any input
     if input:
-        pass
+        output["error"] = f"{Fore.RED}Error: {parts.get("cmd")} should not have input.{Style.RESET_ALL} \nRun 'ls --help' for more info."
 
     # If user wants to ls a certain directory, grab the directory name if it's a directory
     if len(params) == 1:
@@ -377,7 +378,7 @@ def ls(parts):
                 total_size += file_info.st_blocks
             
             # Printing size of directory
-            print("total", total_size // 2)
+            total_size = total_size // 2
             
             # Print details for each file
             for item in directory_list:
@@ -395,7 +396,7 @@ def ls(parts):
                 format_list.append(line)
                 
             # Convert to string and return
-            result = "\n".join(format_list)
+            result = f"Total size: {total_size}\n" + "\n".join(format_list)
             output["output"] = result
             return output
         
@@ -412,7 +413,7 @@ def ls(parts):
                 file_info = os.stat(full_path)
                 total_size += file_info.st_blocks
             
-            print("total", total_size // 2)
+            total_size = total_size // 2
             
             # Print details for each file
             for item in all_directory_list:
@@ -430,8 +431,8 @@ def ls(parts):
                 line = f"{item[0]:<10} {item[1]:<3}{item[2]:<8}{item[3]:<8}{item[4]:>8} {item[5]:<12} {item[6]}"
                 format_list.append(line)
             
-            # Converting to string and returning
-            result = "\n".join(format_list)
+            # Convert to string and return
+            result = f"Total size: {total_size}\n" + "\n".join(format_list)
             output["output"] = result
             return output
             
@@ -448,7 +449,7 @@ def ls(parts):
                 total_size += file_info.st_blocks
             
             # st_blocks * 512 = byte
-            print("total", human_readable(total_size * 512))
+            total_size = human_readable(total_size * 512)
             
             # Print details for each file
             for item in directory_list:
@@ -466,8 +467,8 @@ def ls(parts):
                 line = f"{item[0]:<10} {item[1]:<3}{item[2]:<8}{item[3]:<8}{item[4]:>8} {item[5]:<12} {item[6]}"
                 format_list.append(line)
             
-            # Converting to string and returning
-            result = "\n".join(format_list)
+            # Convert to string and return
+            result = f"Total size: {total_size}\n" + "\n".join(format_list)
             output["output"] = result
             return output
             
@@ -484,7 +485,7 @@ def ls(parts):
                 total_size += file_info.st_blocks
             
             # st_blocks * 512 = byte
-            print("total", human_readable(total_size * 512))
+            total_size = human_readable(total_size * 512)
             
             # Print details for each file
             for item in all_directory_list:
@@ -502,8 +503,8 @@ def ls(parts):
                 line = f"{item[0]:<10} {item[1]:<3}{item[2]:<8}{item[3]:<8}{item[4]:>8} {item[5]:<12} {item[6]}"
                 format_list.append(line)
             
-            # Converting to string and returning
-            result = "\n".join(format_list)
+            # Convert to string and return
+            result = f"Total size: {total_size}\n" + "\n".join(format_list)
             output["output"] = result
             return output
             
