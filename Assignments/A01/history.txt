@@ -15,3 +15,7 @@ wc --help
 wc --help | wc
 clear
 clear
+wc --help
+wc --help | wc
+help --help
+help --help

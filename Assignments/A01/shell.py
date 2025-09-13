@@ -1047,84 +1047,91 @@ def history(parts):
         output["error"] = "Error, history command must not have any params, input, or flags."
     
 def help(parts):
-    '''
-    input: dict({"input" : None, "cmd" : None, "params" : [], "flags" : None, "error" : None})
-    output dict: {"output" : string, "error" : string}
-    '''
+    """
+    Display documentation for available commands.
+
+    This function prints the docstrings of all implemented commands
+    in the shell, allowing the user to see usage instructions and
+    a short description of each command. The output is intended to
+    act like a built-in help manual.
+
+    Example:
+        > help --help
+        Prints description of help command
+    """
     
-    # Getting parsed command from parts dictionary
+    # Storing parsed commands
     input  = parts.get("input", None)
     flags  = parts.get("flags", None)
     params = parts.get("params", None)
     cmd    = parts.get("cmd", None)
     
-    # dictionary to store output
+    # Dictionary to store output
     output = {"output" : None, "error" : None}
     
-    print("    ------------------------------", end= " ")
+    output["output"] = "    ------------------------------"
     
-    # If user only typed command followed by '--help'
+    # Making sure user only typed command followed by '--help'
     if not input and not params and flags == "--help":
-        
         if cmd == "cd":
-            output["output"] = cd.__doc__
-            
+            output["output"] += cd.__doc__
         if cmd == "ls":
-            output["output"] = ls.__doc__
+            output["output"] += ls.__doc__
 
         if cmd == "pwd":
-            output["output"] = pwd_.__doc__
+            output["output"] += pwd_.__doc__
 
         if cmd == "mkdir":
-            output["output"] = mkdir.__doc__
-        
-        if cmd == "cat":
-            output["output"] = cat.__doc__
+            output["output"] += mkdir.__doc__
             
         if cmd == "wc":
-            output["output"] = wc.__doc__
+            output["output"] += wc.__doc__
+            
+        if cmd == "history":
+            output["output"] += history.__doc__
+            
+        if cmd == "help":
+            output["output"] += help.__doc__
         '''
         if cmd == "cp":
-            output["output"] = cp.__doc__
+            output["output"] += cp.__doc__
 
         if cmd == "mv":
-            output["output"] = mv.__doc__
+            output["output"] += mv.__doc__
 
         if cmd == "rm":
-            output["output"] = rm.__doc__
+            output["output"] += rm.__doc__
+
+        if cmd == "cat":
+            output["output"] += cat.__doc__
 
         if cmd == "head":
-            output["output"] = head.__doc__
+            output["output"] += head.__doc__
 
         if cmd == "tail":
-            output["output"] = tail.__doc__
+            output["output"] += tail.__doc__
 
         if cmd == "grep":
-            output["output"] = grep.__doc__
+            output["output"] += grep.__doc__
 
         if cmd == "chmod":
-            output["output"] = chmod.__doc__
-
-        if cmd == "history":
-            output["output"] = history.__doc__
+            output["output"] += chmod.__doc__
 
         if cmd == "exit":
-            output["output"] = exit_shell.__doc__
+            output["output"] += exit_shell.__doc__
 
         if cmd == "more":
-            output["output"] = more.__doc__
+            output["output"] += more.__doc__
 
         if cmd == "less":
-            output["output"] = less.__doc__
+            output["output"] += less.__doc__
 
         '''
         
         output["output"] += "------------------------------"
         return output
-    
-    # User ran invalid help command
     else:
-        output["error"] = f"{Fore.RED}Error: help for command {cmd} could not be found.{Style.RESET_ALL}"
+        output["error"] = f"{Fore.RED}Error, help for command {cmd} could not be found.{Style.RESET_ALL}"
         return output
     
 def get_history_rev():
@@ -1323,7 +1330,7 @@ if __name__ == "__main__":
     # List of commands user may request to execute
     available_commands = ["ls", "pwd", "mkdir", "cd", "cp", "mv", "rm", "cat",
                           "head", "tail", "grep", "wc", "chmod", "history",
-                          "exit", "more", "less", "clear"]
+                          "exit", "more", "less", "clear", "help"]
     
     # Empty cmd variable
     cmd = ""
