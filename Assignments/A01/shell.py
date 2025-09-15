@@ -843,7 +843,7 @@ def tail():
     Binary prefixes can be used, too: KiB=K, MiB=M, and so on.
     '''
 
-def grep():
+def grep(parts):
     '''
     Usage: grep PATTERNS [FILE]...
     Search for PATTERNS in each FILE.
@@ -855,6 +855,133 @@ def grep():
     Exit status is 0 if any line is selected, 1 otherwise;
     if any error occurs, the exit status is 2.
     '''
+    
+    # These are lists
+    input = parts.get("input", None)
+    flags = parts.get("flags", None)
+    params = parts.get("params", None)
+    
+    # Dictionary to return
+    output = {"output" : None, "error" : None}
+    
+    # list to contain matches
+    match = []
+    
+    # Catching bad commands
+    if flags:
+        output["error"] = f"{Fore.RED}Error: 'grep' doesn't take flags.{Style.RESET_ALL} \nRun 'grep --help' for more info."
+        return output
+
+    if not params:
+        output["error"] = f"{Fore.RED}Error: 'grep' must have a pattern to match.{Style.RESET_ALL} \nRun 'grep --help' for more info."
+        return output
+    
+    if not input and len(params) < 2:
+        output["error"] = f"{Fore.RED}Error: 'grep' is missing a pattern or file.{Style.RESET_ALL} \nRun 'grep --help' for more info."
+        return output
+    
+    if input and len(params) > 2:
+        output["error"] = f"{Fore.RED}Error: 'grep' cannot process input and a parameter(s).{Style.RESET_ALL} \nRun 'grep --help' for more info."
+        return output
+    
+    if input and len(params) < 1:
+        output["error"] = f"{Fore.RED}Error: 'grep' has input, but was also given a file to process. Must be one or the other.{Style.RESET_ALL} \nRun 'grep --help' for more info."
+        return output
+    
+    if len(params) > 50:
+        output["error"] = f"{Fore.RED}Error: Params list too long.{Style.RESET_ALL} \nRun 'grep --help' for more info."
+    
+    # list to store split params
+    files = []
+    pattern_parts = []
+    
+    # Loop through params to clean and append to correct list
+    for param in params:
+        clean = param.strip("'\"")
+        
+        # If param is file append to files list | logic From ChatGPT
+        if os.path.isfile(param) or os.path.exists(clean):
+            files.append(param)
+            
+        # Else param is part of the pattern
+        else:
+            pattern_parts.append(param)
+            
+    pattern = " ".join(pattern_parts)  
+        
+    # Convert input to string
+    if input:
+        input = "".join(input)
+        input = input.strip("'")
+    
+    # Store the input or files to process on
+    source = input or files
+    
+    if not source:
+        output["error"] = f"{Fore.RED}Error: Could not get the file or string to process.{Style.RESET_ALL} \nRun 'grep --help' for more info."
+    
+    # if source exists and is a string
+    if isinstance(source, str):
+        
+        # Split the lines of the source and process
+        for line in source.splitlines():
+            if pattern in line:
+                
+                # Highlight all matches of the pattern in yellow
+                highlighted = re.sub(re.escape(pattern), f"{Fore.YELLOW}{pattern}{Style.RESET_ALL}", line)
+                match.append(highlighted)
+        
+        # Converting to string and returning
+        result = "\n".join(match)
+        output["output"] = result
+        return output
+        
+    # Determine if item is a file
+    for file in source:
+        if os.path.isfile(file):
+            # Seeing if file is an absolute path
+            if os.path.isabs(file):
+            
+                # Getting the absolute path from argument
+                path = file
+
+            # if relative path, join with current working directory
+            elif not os.path.isabs(file):
+            
+                # Building absolute path
+                new_dir = file
+                cwd     = os.getcwd()
+                path    = os.path.join(cwd, new_dir)
+                
+            # Match patter with contents in file
+            if path:
+                with open(path, 'r') as file_:
+                    for line in file_:
+                        if pattern in line:
+                            
+                            # Highlight the pattern in green (Got from GPT)
+                            highlighted = re.sub(re.escape(pattern),f"{Fore.YELLOW}{pattern}{Style.RESET_ALL}", line)
+                            
+                            # Output info differently depending on if processing one or many files
+                            if len(files) > 1:
+                                match.append(f"{file}: {highlighted}")
+                            else:
+                                match.append(f"{highlighted}")                                
+                            
+            # Error is could not get path
+            else:
+                output["error"] = f"{Fore.RED}Error: {file} could not be found.{Style.RESET_ALL} \nRun 'grep --help' for more info."
+                return output
+            
+        # Error if one of the files does not exist
+        else:
+            output["error"] = f"{Fore.RED}Error: {file} is not a file.{Style.RESET_ALL} \nRun 'grep --help' for more info."
+            return output
+        
+    # Converting to string and returning
+    result = "".join(match)
+    output["output"] = result
+    return output    
 
 def wc(parts):
     '''
@@ -1200,6 +1327,9 @@ def help(parts):
 
         if cmd == "exit":
             output["output"] += exit.__doc__
+            
+        if cmd == "grep":
+            output["output"] += grep.__doc__
            
         '''
         if cmd == "head":
@@ -1207,9 +1337,6 @@ def help(parts):
 
         if cmd == "tail":
             output["output"] += tail.__doc__
-
-        if cmd == "grep":
-            output["output"] += grep.__doc__
 
         if cmd == "chmod":
             output["output"] += chmod.__doc__
@@ -1607,6 +1734,8 @@ if __name__ == "__main__":
                         result = mv(command)
                     elif command.get("cmd") == "rm":
                         result = rm(command)
+                    elif command.get("cmd") == "grep":
+                        result = grep(command)
                             
                 # Printing result to screen
                 if result["error"]:
