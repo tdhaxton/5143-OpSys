@@ -693,14 +693,7 @@ def cp(parts):
 
     return output
 
-def mv(file1, file2):
-    '''
-    Rename SOURCE to DEST
-
-          --help        display this help and exit
-    '''
-
-def rm():
+def rm(parts):
     '''
     Usage: rm [OPTION]... [FILE]...
     Remove (unlink) the FILE(s).
@@ -716,6 +709,79 @@ def rm():
         rm -- -foo
         rm ./-foo
     '''
+
+    input = parts.get("input", None)
+    flags = parts.get("flags", None)
+    params = parts.get("params", None)
+    
+    output = {"output" : None, "error" : None}
+
+    if input:
+        output["error"] = "Error. Command should not have an input."
+        return output
+    
+    if flags == "-r":
+        shutil.rmtree(params[0])
+    elif flags == "--":
+        try:
+            os.remove(params[0])
+        except FileNotFoundError:
+            output["error"] = f"Error: File {params[0]} not found."
+        except Exception as e:
+            output["error"] = f"An error occurred: {e}"
+    else:
+        if os.path.isdir(params[0]):
+            try:
+                os.rmdir(params[0])
+            except FileNotFoundError:
+                output["error"] = f"Error: File {params[0]} not found."
+            except OSError as e:
+                output["error"] = f"Error deleting directory {params[0]}: {e}"
+            except Exception as e:
+                output["error"] = f"An error occurred: {e}"
+        else:
+            try:
+                os.remove(params[0])
+            except FileNotFoundError:
+                output["error"] = f"Error: File {params[0]} not found."
+            except Exception as e:
+                output["error"] = f"An error occurred: {e}"
+    
+    return output
+
+def mv(parts):
+    # TODO: moved test file to new folder, then file could not be found
+    # when attempting to move a second time
+    '''
+    Rename SOURCE to DEST
+
+          --help        display this help and exit
+    '''
+
+    input = parts.get("input", None)
+    flags = parts.get("flags", None)
+    params = parts.get("params", None)
+    
+    output = {"output" : None, "error" : None}
+
+    if input:
+        output["error"] = "Error. Command should not have an input."
+        return output
+    
+    if flags:
+        output["error"] = "Error. Command doesn't take flags."
+        return output
+    
+    try:
+        shutil.move(params[0], params[1])
+    except FileNotFoundError:
+        output["error"] = f"Error: File {params[0]} not found."
+    except PermissionError:
+        output["error"] = f"Error: Permission denied when moveing {params[0]} to {params[1]}."
+    except Exception as e:
+        output["error"] = f"An unexpected error occurred: {e}"
+
+    return output    
 
 def cat(file):
     '''
@@ -999,6 +1065,9 @@ def chmod():
     '''
 
 def history(parts):
+    # TODO: history.txt file being created in every visited directory 
+    # beginning with the command that successfully enters the directory
+    # location and including all commands made within that directory
     """
     Display or manipulate the history list.
 
@@ -1128,14 +1197,14 @@ def help(parts):
         if cmd == "cp":
             output["output"] += cp.__doc__
 
-           
-        '''
         if cmd == "mv":
             output["output"] += mv.__doc__
 
         if cmd == "rm":
             output["output"] += rm.__doc__
 
+           
+        '''
         if cmd == "head":
             output["output"] += head.__doc__
 
@@ -1540,6 +1609,10 @@ if __name__ == "__main__":
                         result = wc(command)
                     elif command.get("cmd") == "cp":
                         result = cp(command)
+                    elif command.get("cmd") == "mv":
+                        result = mv(command)
+                    elif command.get("cmd") == "rm":
+                        result = rm(command)
                             
                 # Printing result to screen
                 if result["error"]:
