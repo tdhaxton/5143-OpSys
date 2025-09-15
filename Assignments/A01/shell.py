@@ -750,8 +750,6 @@ def rm(parts):
     return output
 
 def mv(parts):
-    # TODO: moved test file to new folder, then file could not be found
-    # when attempting to move a second time
     '''
     Rename SOURCE to DEST
 
@@ -1065,9 +1063,6 @@ def chmod():
     '''
 
 def history(parts):
-    # TODO: history.txt file being created in every visited directory 
-    # beginning with the command that successfully enters the directory
-    # location and including all commands made within that directory
     """
     Display or manipulate the history list.
 
@@ -1097,7 +1092,7 @@ def history(parts):
         # script_dir = os.path.dirname(os.path.abspath(__file__))
 
         # Get the absolute path of the user's home directory
-        home_dir = os.path.dirname("~")
+        home_dir = os.path.expanduser("~")
 
         # # Move history file if it is located in folder where script is 
         # # located
@@ -1203,6 +1198,8 @@ def help(parts):
         if cmd == "rm":
             output["output"] += rm.__doc__
 
+        if cmd == "exit":
+            output["output"] += exit.__doc__
            
         '''
         if cmd == "head":
@@ -1216,9 +1213,6 @@ def help(parts):
 
         if cmd == "chmod":
             output["output"] += chmod.__doc__
-
-        if cmd == "exit":
-            output["output"] += exit_shell.__doc__
 
         if cmd == "more":
             output["output"] += more.__doc__
@@ -1248,7 +1242,7 @@ def get_history_rev():
     """
     
     # Get the absolute path of the user's home directory
-    home_dir = os.path.dirname("~")
+    home_dir = os.path.expanduser("~")
 
     # Build the full path to history.txt inside your repo
     history_file = os.path.join(home_dir, "history.txt")
@@ -1317,7 +1311,7 @@ def write_to_history(cmd):
           
     # Get the absolute path of the user's home directory
     # Since this script and the history file are in the same directory:
-    home_dir = os.path.dirname("~")
+    home_dir = os.path.expanduser("~")
 
     # Build the full path to history.txt inside your repo
     history_file = os.path.join(home_dir, "history.txt")
