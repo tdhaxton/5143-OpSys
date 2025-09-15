@@ -657,12 +657,41 @@ def pwd_():
     output["output"] = cwd 
     return output
 
-def cp():
+def cp(parts):
     '''
     Copy SOURCE to DEST.
 
           --help        display this help and exit
     '''
+
+    input = parts.get("input", None)
+    flags = parts.get("flags", None)
+    params = parts.get("params", None)
+    
+    output = {"output" : None, "error" : None}
+
+    if input:
+        output["error"] = "Error. Command should not have an input."
+        return output
+    
+    if flags:
+        output["error"] = "Error. Command doesn't take flags."
+        return output
+
+    try:
+        shutil.copy(params[0], params[1])
+    except FileNotFoundError:
+        output["error"] = f"Error: File {params[0]} not found."
+    except PermissionError:
+        output["error"] = f"Error: Permission denied when copying {params[0]} to {params[1]}."
+    except shutil.SameFileError:
+        output["error"] = f"Error: Source and destination {params[0]} are the same file."
+    except IsADirectoryError:
+        output["error"] = f"Error: One of the paths provided is a directory, not a file."
+    except Exception as e:
+        output["error"] = f"An unexpected error occurred: {e}"
+
+    return output
 
 def mv(file1, file2):
     '''
@@ -1092,18 +1121,20 @@ def help(parts):
             
         if cmd == "help":
             output["output"] += help.__doc__
-        '''
+
+        if cmd == "cat":
+            output["output"] += cat.__doc__
+
         if cmd == "cp":
             output["output"] += cp.__doc__
 
+           
+        '''
         if cmd == "mv":
             output["output"] += mv.__doc__
 
         if cmd == "rm":
             output["output"] += rm.__doc__
-
-        if cmd == "cat":
-            output["output"] += cat.__doc__
 
         if cmd == "head":
             output["output"] += head.__doc__
@@ -1507,6 +1538,8 @@ if __name__ == "__main__":
                         result = cat(file)
                     elif command.get("cmd") == "wc":
                         result = wc(command)
+                    elif command.get("cmd") == "cp":
+                        result = cp(command)
                             
                 # Printing result to screen
                 if result["error"]:
