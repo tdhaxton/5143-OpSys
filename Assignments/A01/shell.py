@@ -507,6 +507,47 @@ def ls(parts):
             result = f"Total size: {total_size}\n" + "\n".join(format_list)
             output["output"] = result
             return output
+        
+        # Using -merica prints files in red white and blue 
+        elif option == "-merica":
+
+            total_size = 0
+            items = []
+            
+            # Calculate total size of all files in directory
+            for item in all_directory_list:
+                full_path = os.path.join(ls_directory or os.getcwd(), item)
+                file_info = os.stat(full_path)
+                total_size += file_info.st_blocks
+            
+            # st_blocks * 512 = byte
+            total_size = human_readable(total_size * 512)
+            
+            # Print details for each file
+            for item in all_directory_list:
+                    
+                # Getting item info and adding to list
+                full_path = os.path.join(ls_directory or os.getcwd(), item)
+                items.append(format_long_listing(full_path, human = True))
+                    
+            # Returning items sorted by filename
+            items = sorted(items, key=lambda x: x[-1].lower())
+            
+            # Color the lines red white and blue | Got this code from Claude
+            colors = [Fore.RED, Fore.WHITE, Fore.BLUE]
+            format_list = []
+            for i, item in enumerate(items):
+                line = f"{item[0]:<10} {item[1]:<3}{item[2]:<8} {item[3]:<8}{item[4]:>8} {item[5]:<12} {item[6]}"
+        
+                # Apply color cycling through red, white, blue for each line
+                color = colors[i % 3]
+                colored_line = color + line + Style.RESET_ALL
+                format_list.append(colored_line)
+            
+            # Convert to string and return
+            result = f"Total size: {total_size}\n" + "\n".join(format_list)
+            output["output"] = result
+            return output
             
         # Invalid option
         else:

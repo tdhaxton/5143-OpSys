@@ -126,6 +126,10 @@ Run the `shell.py` file and use the following commands...
 - `>`
 - `hfind`
 
+## Extras
+ - Color list contents if they are directory (blue) or executeable (green)
+ - ls -merica command executes like "ls -lah" but with red white and blue pattern
+
 
 ## References:
 - [geeksforgeeks](https://www.geeksforgeeks.org/python/executing-shell-commands-with-python/)
