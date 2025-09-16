@@ -120,7 +120,6 @@ Run the `shell.py` file and use the following commands...
 - `cat`
 - `head`
 - `tail`
-- `chmod`
 - `more`
 - `less`
 - `<`
