@@ -1280,7 +1280,11 @@ def sort(parts):
         return output
     
     # if source exists and is a string
-    elif isinstance(data, str):       
+    elif isinstance(data, str):
+        
+        # Removes characters used to color text in order to properly sort
+        ansi_escape = re.compile(r'\x1b\[[0-9;]*m')
+        data = ansi_escape.sub('', data)         
         
         # Split the lines of the string and append to list
         if "\n" in data and len(data) > 1:
