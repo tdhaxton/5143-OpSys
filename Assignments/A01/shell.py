@@ -1327,11 +1327,92 @@ def sort(parts):
         output["error"] = f"{Fore.RED}Error: {data} could not be properly handled.{Style.RESET_ALL} \nRun 'sort --help' for more info."
         return output
 
-def chmod():
+def chmod(parts):
     '''
-    Usage: chmod OCTAL-MODE FILE...
     Change the mode of each FILE to MODE.
+    
+            The MODE is a three-digit octal number representing the permissions
+            for the user, group, and others, respectively. Each digit is a sum of:
+            4 (read), 2 (write), and 1 (execute).
+            
+            For example, to set read, write, and execute permissions for the user,
+            and read and execute permissions for the group and others, use 755:
+            chmod 755 filename
+    
+            The following table shows the permission values:
+            0    ---    
+            1    --x
+            2    -w-
+            3    -wx
+            4    r--
+            5    r-x
+            6    rw-
+            7    rwx
     '''
+
+    # Getting parsed parts
+    input = parts.get("input", None)
+    flags = parts.get("flags", None)
+    params = parts.get("params", None)
+    
+    # Dictionary to return
+    output = {"output" : None, "error" : None}
+
+    # Filter out bad commands
+    if input:
+        output["error"] = f"{Fore.RED}Error. Command should not have an input.{Style.RESET_ALL}\nRun 'chmod --help' for more info."
+        return output
+    
+    if flags:
+        output["error"] = f"{Fore.RED}Error. Command doesn't take flags.{Style.RESET_ALL}\nRun 'chmod --help' for more info."
+        return output
+    
+    if len(params) != 2:
+        output["error"] = f"{Fore.RED}Error. Command requires exactly two parameters: MODE and FILE.{Style.RESET_ALL}\nRun 'chmod --help' for more info."
+        return output
+    
+    # Splitting params into permission and files
+    permission = params[0]
+    file = params[1]
+    
+    # Validating permission string
+    if len(permission) != 3 or not permission.isdigit():
+        output["error"] = f"{Fore.RED}Error: Invalid permission '{permission}'. Mode should be a three-digit octal number (e.g., 755).{Style.RESET_ALL}\nRun 'chmod --help' for more info."
+        return output
+    
+    for digit in permission:
+        if digit < '0' or digit > '7':
+            output["error"] = f"{Fore.RED}Error: Invalid permission '{permission}'. Each digit should be between 0 and 7.{Style.RESET_ALL}\nRun 'chmod --help' for more info."
+            return output
+    
+    
+    # Seeing if file is an absolute path
+    if os.path.isabs(file):
+        file_path = file
+        
+    # If relative path, join with cwd
+    else:
+        file_path = os.path.join(os.getcwd(), file) 
+        
+    # File not found
+    if not os.path.exists(file_path):
+        output["error"] = f"{Fore.RED}Error: {file} could not be found.{Style.RESET_ALL}\nRun 'chmod --help' for more info."
+        return output
+    
+    # Change file permissions
+    try:
+        # Convert parameters to int
+        mode = int(params[0], 8)
+        os.chmod(file_path, mode)
+
+    # Catching errors
+    except PermissionError:
+        output["error"] = f"Error: Permission denied when changing mode of {file}."
+    except Exception as e:
+        output["error"] = f"An unexpected error occurred: {e}"
+
+    # Return success case
+    return output
 
 def history(parts):
     """
@@ -1439,44 +1520,48 @@ def help(parts):
     if not input and not params and flags == "--help":
         if cmd == "cd":
             output["output"] += cd.__doc__
-        if cmd == "ls":
+            
+        elif cmd == "ls":
             output["output"] += ls.__doc__
 
-        if cmd == "pwd":
+        elif cmd == "pwd":
             output["output"] += pwd_.__doc__
 
-        if cmd == "mkdir":
+        elif cmd == "mkdir":
             output["output"] += mkdir.__doc__
             
-        if cmd == "wc":
+        elif cmd == "wc":
             output["output"] += wc.__doc__
             
-        if cmd == "history":
+        elif cmd == "history":
             output["output"] += history.__doc__
             
-        if cmd == "help":
+        elif cmd == "help":
             output["output"] += help.__doc__
 
-        if cmd == "cat":
+        elif cmd == "cat":
             output["output"] += cat.__doc__
 
-        if cmd == "cp":
+        elif cmd == "cp":
             output["output"] += cp.__doc__
 
-        if cmd == "mv":
+        elif cmd == "mv":
             output["output"] += mv.__doc__
 
-        if cmd == "rm":
+        elif cmd == "rm":
             output["output"] += rm.__doc__
 
-        if cmd == "exit":
+        elif cmd == "exit":
             output["output"] += exit.__doc__
             
-        if cmd == "grep":
+        elif cmd == "grep":
             output["output"] += grep.__doc__
             
-        if cmd == "sort":
+        elif cmd == "sort":
             output["output"] += sort.__doc__
+            
+        elif cmd == "chmod":
+            output["output"] += chmod.__doc__
            
         '''
         if cmd == "head":
@@ -1484,9 +1569,6 @@ def help(parts):
 
         if cmd == "tail":
             output["output"] += tail.__doc__
-
-        if cmd == "chmod":
-            output["output"] += chmod.__doc__
 
         if cmd == "more":
             output["output"] += more.__doc__
@@ -1826,6 +1908,9 @@ if __name__ == "__main__":
                             command_list = parse_cmd(result["output"])
                             cmd = result["output"]
                             
+                            # Resetting result
+                            result["output"] = None
+                            
                             # Printing to the user what is about to be executed
                             print()
                             print("Command(s) being executed.")
@@ -1834,7 +1919,6 @@ if __name__ == "__main__":
                                 print("Command:", command.get("cmd"))
                                 print("Flags:", command.get("flags"))
                                 print("Params:", command.get("params"))
-                                print("Input:", command.get("input"))
                                 print("--------------------")
                             print()
 
@@ -1885,6 +1969,8 @@ if __name__ == "__main__":
                         result = grep(command)
                     elif command.get("cmd") == "sort":
                         result = sort(command)
+                    elif command.get("cmd") == "chmod":
+                        result = chmod(command)
                             
                 # Printing result to screen
                 if result["error"]:
