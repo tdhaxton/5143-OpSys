@@ -127,9 +127,11 @@ Run the `shell.py` file and use the following commands...
 - `hfind`
 
 ## Extras
- - Color list contents if they are directory (blue) or executeable (green)
- - ls -merica command executes like "ls -lah" but with red white and blue pattern
-
+- Color list contents if they are directory (blue) or executable (green)
+- ls -merica: executes like "ls -lah" but with red white and blue pattern
+- date: displays date and time
+- clear: clears the screen
+- ip: displays ip address
 
 ## References:
 - [geeksforgeeks](https://www.geeksforgeeks.org/python/executing-shell-commands-with-python/)

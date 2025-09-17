@@ -115,7 +115,7 @@ def exit():
     print(f"{Fore.GREEN}Okay Bye")  # moves next command line to new line
     raise SystemExit
 
-# Helper function for ls_with_args
+# Helper function for ls
 def color_filename(item, full_path):
     '''
     Returns a colored string for a filename based on its type.
@@ -136,7 +136,7 @@ def color_filename(item, full_path):
     # Leaving all other itms default color
     return item
     
-# Helper functin for ls_with_args
+# Helper functin for ls
 def format_long_listing(full_path, human = False):
     '''
     Returns detailed metadata for a file in "long listing" format.
@@ -167,7 +167,7 @@ def format_long_listing(full_path, human = False):
     return [permissions, links, owner, group, size, mod_time, name]
     #return f"{permissions} {links} {owner} {group} {size} {mod_time} {name}"
 
-# Helper function for ls_with_args
+# Helper function for ls
 def get_directory_items(directory = None, include_hidden = False):
     '''
     Returns a list of items in the current directory.
@@ -201,6 +201,7 @@ def get_directory_items(directory = None, include_hidden = False):
                 
         return non_hidden_items
 
+# Helper function for ls
 def human_readable(size):
     """
     Convert a file size in bytes to a human-readable format.
@@ -1455,6 +1456,88 @@ def chmod(parts):
     # Return success case
     return output
 
+def ip(parts):
+    '''
+    Display the IP address of the machine.
+    '''
+    
+    # Getting parsed parts
+    input = parts.get("input", None)
+    flags = parts.get("flags", None)
+    params = parts.get("params", None)    
+    
+    # Dictionary to return
+    output = {"output" : None, "error" : None}
+    
+    # Filter out bad commands
+    if input or flags or params:
+        output["error"] = f"{Fore.RED}Error. Command should not have any input, flags, or params.{Style.RESET_ALL}\nRun 'ip --help' for more info."
+        return output
+    
+    # Getting hostname and IP address
+    try:
+        hostname = socket.gethostname()
+        ip_addr  = socket.gethostbyname(hostname)
+        output["output"] = f"IP Address: {ip_addr}"
+    except Exception as e:
+        output["error"] = f"{Fore.RED}An error occurred while retrieving the IP address: {e}.{Style.RESET_ALL}"
+    
+    # Return final output
+    return output
+
+def date(parts):
+    '''
+    Display the current date and time.
+    '''
+    
+    # Getting parsed parts
+    input = parts.get("input", None)
+    flags = parts.get("flags", None)
+    params = parts.get("params", None)    
+    
+    # Dictionary to return
+    output = {"output" : None, "error" : None}
+    
+    # Filter out bad commands
+    if input or flags or params:
+        output["error"] = f"{Fore.RED}Error. Command should not have any input, flags, or params.{Style.RESET_ALL}\nRun 'date --help' for more info."
+        return output
+    
+    # Getting current date and time
+    # Got time functions from chatGPT
+    try:
+        current_time = time.strftime("%m-%d-%y %H:%M:%S", time.localtime())
+        output["output"] = f"{current_time}"
+    except Exception as e:
+        output["error"] = f"{Fore.RED}An error occurred while retrieving the date and time: {e}.{Style.RESET_ALL}"
+    
+    # Return final output
+    return output
+
+def clear_screen(parts):
+    '''
+    Clear the terminal screen.
+    '''
+    
+    # Getting parsed parts
+    input = parts.get("input", None)
+    flags = parts.get("flags", None)
+    params = parts.get("params", None)    
+    
+    # Dictionary to return
+    output = {"output" : None, "error" : None}
+    
+    # Filter out bad commands
+    if input or flags or params:
+        output["error"] = f"{Fore.RED}Error. Command should not have any input, flags, or params.{Style.RESET_ALL}\nRun 'clear --help' for more info."
+        return output
+    
+    # Clear the screen
+    clear()
+    
+    # Return final output
+    return output
+
 def history(parts):
     """
     Display or manipulate the history list.
@@ -1603,6 +1686,15 @@ def help(parts):
             
         elif cmd == "chmod":
             output["output"] += chmod.__doc__
+            
+        elif cmd == "ip":
+            output["output"] += ip.__doc__
+        
+        elif cmd == "date":
+            output["output"] += date.__doc__
+            
+        elif cmd == "clear":
+            output["output"] += clear_screen.__doc__
            
         '''
         if cmd == "head":
@@ -1821,7 +1913,8 @@ if __name__ == "__main__":
     # List of commands user may request to execute
     available_commands = ["ls", "pwd", "mkdir", "cd", "cp", "mv", "rm", "cat",
                           "head", "tail", "grep", "wc", "chmod", "history",
-                          "exit", "more", "less", "sort", "help"]
+                          "exit", "more", "less", "sort", "help", "ip", "date",
+                          "clear"]
     
     # Empty cmd variable
     cmd = ""
@@ -2012,6 +2105,12 @@ if __name__ == "__main__":
                         result = sort(command)
                     elif command.get("cmd") == "chmod":
                         result = chmod(command)
+                    elif command.get("cmd") == "ip":
+                        result = ip(command)
+                    elif command.get("cmd") == "date":
+                        result = date(command)
+                    elif command.get("cmd") == "clear":
+                        result = clear_screen(command)
                             
                 # Printing result to screen
                 if result["error"]:
