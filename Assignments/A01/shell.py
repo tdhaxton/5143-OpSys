@@ -719,6 +719,10 @@ def cp(parts):
     if flags:
         output["error"] = "Error. Command doesn't take flags."
         return output
+    
+    if len(params) != 2:
+        output["error"] = "Error. Command takes two parameters."
+        return output
 
     try:
         shutil.copy(params[0], params[1])
