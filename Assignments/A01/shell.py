@@ -53,11 +53,12 @@ import stat
 import socket 
 import getpass
 import time
-from time import sleep
+import subprocess
+#from time import sleep
 
 from getch import Getch
 from colorama import init, Fore, Style
-import requests
+#import requests
 #from rich import print
 import shutil
 import re
@@ -84,12 +85,12 @@ def WelcomeMessage():
     print()
     print(f"{Fore.GREEN}Welcome to the Simple Shell!")
     print("---------------------------------------------------------------------")
-    print(f"{Fore.GREEN}To see avaiable commands, type 'help' [Need to implement help command].")
+    print(f"{Fore.GREEN}To see avaiable commands, type 'commands'.")
     print(f"{Fore.GREEN}Type '<command> --help' for information on a specific command.")
     print(f"{Fore.GREEN}Type 'exit' or ctrl + c to quit.")
     print(f"{Fore.GREEN}Designed and implemented by Tim Haxton, Harika Vemulapalli, and Cooper Wolf.")
     print(f"{Fore.GREEN}Don't steal our code, we'll sue.")
-    print("---------------------------------------------------------------------")
+    print(f"---------------------------------------------------------------------{Style.RESET_ALL}")
     print()
 
 def get_terminal_width():
@@ -1049,7 +1050,7 @@ def wc(parts):
             --help      display this help and exit
     '''
     
-    # Getting parsed commands from parts dictionary
+    # Parsing parts dictionary
     input  = parts.get("input", None)
     flags  = parts.get("flags", None)
     params = parts.get("params", None)
@@ -1088,7 +1089,7 @@ def wc(parts):
         output["error"] = f"{Fore.RED}Error: {flags} is not a viable flag.{Style.RESET_ALL} Run 'wc --help' for flag options"
         return output
     
-    # Storing either the input or params to check if its a file or string
+    # Checking if input or params in a file.
     item = input or params
     
     # Determine if item is a file
@@ -1108,7 +1109,8 @@ def wc(parts):
             cwd     = os.getcwd()
             path    = os.path.join(cwd, new_dir)
             
-        # If user gave a directory path with flags
+        # If user ran a pipe and wc section only contains wc
+        # Example: ls | wc -w or wc -l fruit.txt
         if flags and path:
             
             # Get countswhat
@@ -1129,7 +1131,8 @@ def wc(parts):
             output["output"] = " ".join(filter(None, output_values))
             return output
             
-        # If user gave directory path without flags
+        # If user ran wc with flags
+        # Example wc fruit.txt or ls | wc
         if not flags and path:
             
             # Get counts
@@ -1144,11 +1147,11 @@ def wc(parts):
             output["output"] = f"{line_count} {word_count} {char_count} {input or params}"
             return output            
             
-    # Determine if item is a string and its from input
+    # Determine if item is a string
     elif isinstance(item, str) and input and not params:
         
-        # Split string in lines first 
-        lines = item.splitlines()
+        
+        print(item)
         
         # Removes characters used to color text
         ansi_escape = re.compile(r'\x1b\[[0-9;]*m')
@@ -1156,10 +1159,12 @@ def wc(parts):
         
         # Split string in lines first
         lines = item.splitlines()
+        
+        print("---LINES---")
+        print(lines)
     
-        # If user ran pipe and command before wc returned a string
-        # and there are flags
-        # Example: ls -la | wc -l
+        # If user ran a pipe and wc section only contains wc
+        # Example: ls | wc -w or wc -l fruit.txt
         if flags and item:
             
             # Getting line count
@@ -1180,7 +1185,7 @@ def wc(parts):
                 if len(lines) > 1:
                     for line in lines:
                         for words in line.split():
-                            word_count += len(words)
+                            word_count += 1
                             
                 # Only one line      
                 else:
@@ -1195,7 +1200,7 @@ def wc(parts):
             output["output"] = " ".join(filter(None, output_values))
             return output
             
-        # If user ran wc without flags
+        # If user ran wc with flags
         # Example wc fruit.txt or ls | wc
         if not flags and item:
             
@@ -1211,9 +1216,9 @@ def wc(parts):
             if len(lines) > 1:
                 for line in lines:
                     for words in line.split():
-                        word_count += len(words)
-            
-            # Just a one line string       
+                        print(words)
+                        word_count += 1
+                        
             else:
                 word_count = len(lines)
             
@@ -1263,7 +1268,7 @@ def sort(parts):
         output["error"] = f"{Fore.RED}Error: 'sort' needs either input or params.{Style.RESET_ALL} \nRun 'sort --help' for more info."
         return output
         
-    if flags not in ["-r", "-n", None]:
+    if flags not in ["-r", "-n", "-a", None]:
         output["error"] = f"{Fore.RED}Error: Invalid flag: '{flags}'.{Style.RESET_ALL} \nRun 'sort --help' for more info."
         return output
         
@@ -1301,7 +1306,7 @@ def sort(parts):
                         sorted_list.append(line)
                     else:
                         line = line + "\n"
-                        sorted_list.append()
+                        sorted_list.append(line)
                     
             # Sort alphebetically
             if flags in ["-a", None]:
@@ -1313,7 +1318,12 @@ def sort(parts):
                 
             # Sort numerically
             elif flags == "-n":
-                sorted_list.sort(key=int)
+                
+                try:
+                    sorted_list.sort(key=int)
+                except ValueError:
+                    output["error"] = f"{Fore.RED}Error: 'sort -n' can only be used on files with numbers.{Style.RESET_ALL} \nRun 'sort --help' for more info."
+                    return output
                 
         # Error if path not found
         else:
@@ -1330,7 +1340,7 @@ def sort(parts):
         
         # Removes characters used to color text in order to properly sort
         ansi_escape = re.compile(r'\x1b\[[0-9;]*m')
-        data = ansi_escape.sub('', data)         
+        data = ansi_escape.sub('', data)       
         
         # Split the lines of the string and append to list
         if "\n" in data and len(data) > 1:
@@ -1361,17 +1371,21 @@ def sort(parts):
             
         # Sort numerically
         if flags == "-n":
-            sorted_list.sort(key=int)              
+            try:
+                sorted_list.sort(key=int)
+            except ValueError:
+                output["error"] = f"{Fore.RED}Error: 'sort -n' can only be used on files with numbers.{Style.RESET_ALL} \nRun 'sort --help' for more info."
+                return output              
         
         # Converting to string and returning
         result = "\n".join(sorted_list)
         output["output"] = result
         return output
     
-    # data was not a string or file
+    # Data was not a string or file
     else:
         output["error"] = f"{Fore.RED}Error: {data} could not be properly handled.{Style.RESET_ALL} \nRun 'sort --help' for more info."
-        return output
+        return output 
 
 def chmod(parts):
     '''
@@ -1516,6 +1530,138 @@ def date(parts):
         output["error"] = f"{Fore.RED}An error occurred while retrieving the date and time: {e}.{Style.RESET_ALL}"
     
     # Return final output
+    return output
+
+def run(parts):
+    '''
+    Launch the Firefox web browser or Nautilus fire manager.
+    
+    Possible commands: run firefox, run nautilus
+    
+    Note: 
+    
+    This command does not take any input or flags.
+    Make sure Firefox and Nautilus is installed on your system.
+    
+    Run only works in a GUI environment.
+    Vs Code terminal is not a GUI environment.
+    If running in a non-GUI environment, this command will return an error.
+    
+    To install Firefox and Nautilus:
+    1. sudo apt update
+    2. sudo apt install firefox -y 
+    3. sudo apt install nautilus -y
+    '''
+    
+    # Getting parsed parts
+    input = parts.get("input", None)
+    flags = parts.get("flags", None)
+    params = parts.get("params", None)    
+    
+    # Dictionary to return
+    output = {"output" : None, "error" : None}
+    
+    # Throw error if user added input, flags
+    if input and flags:
+        output["error"] = f"{Fore.RED}Error: Command should not have any input or flags .{Style.RESET_ALL}\nRun 'run --help' for more info."
+        return output
+    
+    if len(params) != 1:
+        output["error"] = f"{Fore.RED}Error: Command only takes one parameter.{Style.RESET_ALL}\nRun 'run --help' for more info."
+        return output
+    
+    # Convert params to string
+    if params:
+        params = "".join(params)
+        params = params.strip("'")
+    
+    # Throw error if user didn't provide correct parameter
+    if params not in ["firefox", "nautilus"]:
+        output["error"] = f"{Fore.RED}Error: Command only takes 'firefox' or 'nautilus' as a parameter.{Style.RESET_ALL}\nRun 'run --help' for more info."
+        return output
+    
+    # Storing program to run
+    program = params.strip().lower()
+    
+    # Check if DISPLAY exists for GUI
+    # firefix needs a display to run
+    if "DISPLAY" not in os.environ:
+        output["error"] = f"{Fore.RED}Error: Cannot run GUI apps: no display found.{Style.RESET_ALL} \nRun 'run --help' for more info."
+        return output
+
+    # Check if program exists
+    # shutil.which searchs for executables in system path
+    if shutil.which(program):
+        try:
+            # Running firefox on its own process so firefox can run independently
+            # Suppress output by redirecting to DEVNULL
+            # Python script can continue runnning without waiting for firefox to close
+            subprocess.Popen([program], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            
+            # Return nothing on success
+            return output
+            
+        # Catch any exceptions during launch
+        except Exception as e:
+            output["error"] = f"Error launching {program}: {e}"
+            return output
+            
+    # Program not found in PATH
+    else:
+        output["error"] = f"Program '{program}' not found in PATH."
+        output["error"] = f"Is {program} installed?{Style.RESET_ALL}\nIf it isn't, exit the shell and install."
+        output["error"] += f"\nTo install {program}:\n  1. sudo apt update\n  2. sudo apt install {program} -y"
+        return output
+
+def list_of_commands(parts):
+    '''
+    Returns a list of all available commands in the shell.
+    '''
+    
+    # Getting parsed parts
+    input = parts.get("input", None)
+    flags = parts.get("flags", None)
+    params = parts.get("params", None)    
+    
+    # Dictionary to return
+    output = {"output" : None, "error" : None}
+    
+    # Filter out bad commands
+    if input or flags or params:
+        output["error"] = f"{Fore.RED}Error. Command should not have any input, flags, or params.{Style.RESET_ALL}\nRun 'commands --help' for more info."
+        return output
+    
+    # Starting with empty output
+    output["output"] = ""
+
+    # Concatenating command list
+    output["output"] += f"{Fore.GREEN}cd{Style.RESET_ALL}: change directory\n"
+    output["output"] += f"{Fore.GREEN}ls{Style.RESET_ALL}: list files\n"
+    output["output"] += f"{Fore.GREEN}pwd{Style.RESET_ALL}: print working directory\n"
+    output["output"] += f"{Fore.GREEN}mkdir{Style.RESET_ALL}: make directory\n"
+    output["output"] += f"{Fore.GREEN}wc{Style.RESET_ALL}: word/line/character count\n"
+    output["output"] += f"{Fore.GREEN}cat{Style.RESET_ALL}: display file contents\n"
+    output["output"] += f"{Fore.GREEN}grep{Style.RESET_ALL}: search text in files\n"
+    output["output"] += f"{Fore.GREEN}sort{Style.RESET_ALL}: sort lines in files\n"
+    output["output"] += f"{Fore.GREEN}mv{Style.RESET_ALL}: move/rename files\n"
+    output["output"] += f"{Fore.GREEN}rm{Style.RESET_ALL}: remove files\n"
+    output["output"] += f"{Fore.GREEN}help{Style.RESET_ALL}: show help info\n"
+    output["output"] += f"{Fore.GREEN}history{Style.RESET_ALL}: show command history\n"
+    output["output"] += f"{Fore.GREEN}chmod{Style.RESET_ALL}: change file permissions\n"
+    output["output"] += f"{Fore.GREEN}cp{Style.RESET_ALL}: copy files\n"
+    output["output"] += f"{Fore.GREEN}date{Style.RESET_ALL}: show current date/time\n"
+    output["output"] += f"{Fore.GREEN}clear{Style.RESET_ALL}: clear terminal\n"
+    output["output"] += f"{Fore.GREEN}exit{Style.RESET_ALL}: exit shell\n"
+    output["output"] += f"{Fore.GREEN}run{Style.RESET_ALL}: run a program\n"
+    output["output"] += f"{Fore.GREEN}ip{Style.RESET_ALL}: show IP address\n"
+    output["output"] += f"{Fore.GREEN}commands{Style.RESET_ALL}: list available commands\n"
+    output["output"] += f"{Fore.GREEN}!x{Style.RESET_ALL}: run command from history\n"
+    output["output"] += f"{Fore.GREEN}head{Style.RESET_ALL}: show first lines of file\n"
+    output["output"] += f"{Fore.GREEN}tail{Style.RESET_ALL}: show last lines of file\n"
+    output["output"] += f"{Fore.GREEN}more{Style.RESET_ALL}: paginate file output\n"
+    output["output"] += f"{Fore.GREEN}less{Style.RESET_ALL}: scroll through file output\n"
+
+    # Returning output
     return output
 
 def clear_screen(parts):
@@ -1699,6 +1845,17 @@ def help(parts):
             
         elif cmd == "clear":
             output["output"] += clear_screen.__doc__
+            
+        elif cmd == "run":
+            output["output"] += run.__doc__
+            
+        elif cmd == "commands":
+            output["output"] += list_of_commands.__doc__
+            
+        elif cmd == "!x":
+            output["output"] += cmd_from_history.__doc__
+            
+        
            
         '''
         if cmd == "head":
@@ -1918,7 +2075,7 @@ if __name__ == "__main__":
     available_commands = ["ls", "pwd", "mkdir", "cd", "cp", "mv", "rm", "cat",
                           "head", "tail", "grep", "wc", "chmod", "history",
                           "exit", "more", "less", "sort", "help", "ip", "date",
-                          "clear"]
+                          "clear", "run", "commands", "!x"]
     
     # Empty cmd variable
     cmd = ""
@@ -2029,36 +2186,36 @@ if __name__ == "__main__":
                 result = {"output" : None, "error" : None}
                 
                 # Handle if user wants to run !x command
-                if len(command_list) == 1 and command_list[0].get("cmd").startswith("!"):
+                if len(command_list) == 1 and command_list[0].get("cmd").startswith("!") and command_list[0].get("cmd")[1].isnumeric():
                     
                     # Get the cmd and send to function.
                     # It includes ! but we will remove in function
-                        result = cmd_from_history(command_list[0].get("cmd"))
+                    result = cmd_from_history(command_list[0].get("cmd"))
                         
-                        #Setting cmd to 'x' command from !x
-                        if result["error"]:
+                    #Setting cmd to 'x' command from !x
+                    if result["error"]:
                             
-                            # Set command list to zero
-                            command_list = []
+                        # Set command list to zero
+                        command_list = []
                             
-                        # Setting command_list to result command from !x command
-                        else:
-                            command_list = parse_cmd(result["output"])
-                            cmd = result["output"]
+                    # Setting command_list to result command from !x command
+                    else:
+                        command_list = parse_cmd(result["output"])
+                        cmd = result["output"]
                             
-                            # Resetting result
-                            result["output"] = None
+                        # Resetting result
+                        result["output"] = None
                             
-                            # Printing to the user what is about to be executed
-                            print()
-                            print("Command(s) being executed.")
+                        # Printing to the user what is about to be executed
+                        print()
+                        print("Command(s) being executed.")
+                        print("--------------------")
+                        for command in command_list:
+                            print("Command:", command.get("cmd"))
+                            print("Flags:", command.get("flags"))
+                            print("Params:", command.get("params"))
                             print("--------------------")
-                            for command in command_list:
-                                print("Command:", command.get("cmd"))
-                                print("Flags:", command.get("flags"))
-                                print("Params:", command.get("params"))
-                                print("--------------------")
-                            print()
+                        print()
 
             
                 while len(command_list) != 0:
@@ -2115,6 +2272,10 @@ if __name__ == "__main__":
                         result = date(command)
                     elif command.get("cmd") == "clear":
                         result = clear_screen(command)
+                    elif command.get("cmd") == "run":
+                        result = run(command)
+                    elif command.get("cmd") == "commands":
+                        result = list_of_commands(command)
                             
                 # Printing result to screen
                 if result["error"]:
@@ -2126,9 +2287,10 @@ if __name__ == "__main__":
             # Writing command to history
             write_to_history(cmd)
 
-            # Setting cmd back to blank and cursor back to 0
+            # Setting cmd blank, cursor to 0, and history index to -1
             cmd = ""
             cursor_pos = 0
+            history_index = -1
             
             print_cmd(cmd)  # now print empty cmd prompt on next line
             

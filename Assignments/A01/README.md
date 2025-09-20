@@ -132,6 +132,7 @@ Run the `shell.py` file and use the following commands...
 - date: displays date and time
 - clear: clears the screen
 - ip: displays ip address
+- run command runs an application
 
 ## References:
 - [geeksforgeeks](https://www.geeksforgeeks.org/python/executing-shell-commands-with-python/)
