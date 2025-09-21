@@ -93,18 +93,19 @@ def WelcomeMessage():
     print(f"---------------------------------------------------------------------{Style.RESET_ALL}")
     print()
 
-def get_terminal_width():
+def get_terminal_size():
     '''
     Returns the width of the terminal in characters.
     '''
     try:
         size = shutil.get_terminal_size()
-        return size.columns
+        return size.lines, size.columns
     except OSError:
         # Handle cases where no terminal is connectec (e.g., running in an IDE
         # without a console)
         # You can return a default value or raise a custom error here.
-        return 80  # Default to 80 columns if size cannot be determined
+        return 80, 80  # Default to 80 lines and 80 columns if size 
+                       # cannot be determined
 
 def exit():
     '''
@@ -1474,6 +1475,127 @@ def chmod(parts):
     # Return success case
     return output
 
+def more(parts):
+    '''
+    Usage:
+     more <file>...
+
+     --help     display this help
+    '''
+    lines, columns = get_terminal_size()
+    output = {"output" : None, "error" : None}
+    files = []
+    # display buffer to hold input data
+    display_buffer = []
+
+    # Getting parsed parts
+    input = parts.get("input", None)
+    flags = parts.get("flags", None)
+    params = parts.get("params", None)
+
+    if flags:
+        output["error"] = f"Error: Command does not take flags."
+        return output
+    
+    if input:
+        if os.path.isfile(input):
+            files.append(input)
+        else:
+            if isinstance(input, str):
+                data_in = input.splitlines()
+            elif isinstance(input, list):
+                data_in = input
+            else:
+                data_in = [str(input)]
+            for whole_line in data_in:
+                line = whole_line.rstrip("\n")
+                while len(line) > columns:
+                    display_buffer.append(line[:columns])
+                    line = line[columns:]
+                display_buffer.append(line)
+
+    if params:
+        for param in params:
+            if os.path.isfile(param):
+                files.append(param)
+            else:
+                output["error"] = f"Error: Could not get the file to process. \nRun 'more --help' for more info."
+    
+    for file in files:
+        if os.path.isabs(file):
+            path = file
+        elif not os.path.isabs(file):
+            new_dir = file
+            cwd = os.getcwd()
+            path = os.path.join(cwd, new_dir)
+
+        if path:
+            try:
+                with open(path, 'r') as file_:
+                    # Read in each line of the input file as is and
+                    # process it
+                    for whole_line in file_:                        
+                        line = whole_line.rstrip("\n")    # remove the
+                                                        # trailing 
+                                                        # newline but 
+                                                        # keep spaces 
+                                                        # intact 
+                        
+                        # If the line is longer than the width of the 
+                        # terminal, slice it and add it to the display 
+                        # buffer
+                        while len(line) > columns:
+                            display_buffer.append(line[:columns])
+                            line = line[columns:]
+                        # Otherwise, just add it to the display buffer
+                        display_buffer.append(line)
+            except FileNotFoundError:
+                output["error"] = f"Error: File {params} not found."
+            except Exception as e:
+                output["error"] = f"An unexpected error occurred: {e}"  
+            
+        else:
+            output["error"] = f"Error: {file} could not be found. \nRun 'more --help' for more info."
+            return output
+
+    # start the screen display at 0
+    viewport_start = 0
+    while True:
+        os.system("clear")
+        page = display_buffer[viewport_start : viewport_start + (lines - 1)]
+        for line in page:
+            print(line)
+        
+        percent_displayed = ((viewport_start + len(page)) / len(display_buffer)) * 100
+        print(f"--MORE-- {percent_displayed:.1f}%", end="", flush=True)
+        
+        key = getch()
+        if key == "q":
+            return output
+        elif key in " ":
+            viewport_start = min(viewport_start + (lines - 1), len(display_buffer) - (lines - 1))
+        elif key in ("\n", "\r"):
+            viewport_start = min(viewport_start + 1, len(display_buffer) - (lines - 1))
+        elif key in "\x1b":
+            null = getch()
+            direction = getch()
+            if direction in "A":
+                viewport_start = 0
+            if direction in "B":
+                viewport_start = min(viewport_start + (lines - 1), len(display_buffer) - (lines - 1))
+        else:
+            pass
+        if percent_displayed >= 100:
+            return output
+
+def less(parts):
+    '''
+    Usage:
+     less <file>...
+
+     --help     display this help
+    '''
+
 def ip(parts):
     '''
     Display the IP address of the machine.
@@ -1855,7 +1977,11 @@ def help(parts):
         elif cmd == "!x":
             output["output"] += cmd_from_history.__doc__
             
-        
+        if cmd == "more":
+            output["output"] += more.__doc__
+
+        if cmd == "less":
+            output["output"] += less.__doc__
            
         '''
         if cmd == "head":
@@ -1864,12 +1990,7 @@ def help(parts):
         if cmd == "tail":
             output["output"] += tail.__doc__
 
-        if cmd == "more":
-            output["output"] += more.__doc__
-
-        if cmd == "less":
-            output["output"] += less.__doc__
-
+        
         '''
         
         output["output"] += "------------------------------"
@@ -2276,6 +2397,10 @@ if __name__ == "__main__":
                         result = run(command)
                     elif command.get("cmd") == "commands":
                         result = list_of_commands(command)
+                    elif command.get("cmd") == "more":
+                        result = more(command)
+                    elif command.get("cmd") == "less":
+                        result = less(command)
                             
                 # Printing result to screen
                 if result["error"]:
