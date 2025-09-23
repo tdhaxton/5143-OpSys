@@ -1150,19 +1150,13 @@ def wc(parts):
             
     # Determine if item is a string
     elif isinstance(item, str) and input and not params:
-        
-        
-        print(item)
-        
+
         # Removes characters used to color text
         ansi_escape = re.compile(r'\x1b\[[0-9;]*m')
         item = ansi_escape.sub('', item)
         
         # Split string in lines first
         lines = item.splitlines()
-        
-        print("---LINES---")
-        print(lines)
     
         # If user ran a pipe and wc section only contains wc
         # Example: ls | wc -w or wc -l fruit.txt
