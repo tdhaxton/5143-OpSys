@@ -1584,11 +1584,184 @@ def more(parts):
 
 def less(parts):
     '''
-    Usage:
-     less <file>...
+    SUMMARY OF LESS COMMANDS
 
-     --help     display this help
+    Commands marked with * may be preceded by a number, N.
+    Notes in parenthesis indicate the behavior if N is given.
+    A key preceded by a caret indicates the Ctrl key; thus ^K is ctrl-K
+
+    h  H                Display this help.
+    q  :q  Q  :Q  ZZ    Exit
+    --------------------------------------------------------------------
+
+    MOVING
+
+    e  ^E  j  ^N  CR  *  Forward  one line  
+    y  ^Y  k  ^K  ^P  *  Backward one line  
+    f  ^F  ^V  SPACE  *  Forward  one window
+    b  ^B  ESC-V      *  Backward one window
+    z                 *  Forward  one window
+    w                 *  Backward one window
+    ESC-SPACE         *  Forward  one window, but don't stop at end-of-file.
+    d  ^D             *  Forward  one half-window.
+    u  ^U             *  Backward one half-window.
+    ESC-> RightArrow  *  Right one half screen width (or N positions).
+    ESC-< LeftArrow   *  Left one half screen width (or N positions).
+    ESC-} ^RightArrow *  Right to last column displayed.
+    ESC-{ ^LeftArrow  *  Left  to first column.
+    F                 *  Forward forever; like "tail -f"
+         ----------------------------------------------------
+         Default "window" is the screen height.
+         Default half-window" is half of the screen height.
+    --------------------------------------------------------------------
     '''
+
+    lines, columns = get_terminal_size()
+    output = {"output" : None, "error" : None}
+    files = []
+    # display buffer to hold input data
+    display_buffer = []
+
+    # Getting parsed parts
+    input = parts.get("input", None)
+    flags = parts.get("flags", None)
+    params = parts.get("params", None)
+
+    if flags:
+        output["error"] = f"Error: Command does not take flags."
+        return output
+    
+    if input:
+        if os.path.isfile(input):
+            files.append(input)
+        else:
+            if isinstance(input, str):
+                data_in = input.splitlines()
+            elif isinstance(input, list):
+                data_in = input
+            else:
+                data_in = [str(input)]
+            for whole_line in data_in:
+                line = whole_line.rstrip("\n")
+                while len(line) > columns:
+                    display_buffer.append(line[:columns])
+                    line = line[columns:]
+                display_buffer.append(line)
+
+    if params:
+        for param in params:
+            if os.path.isfile(param):
+                files.append(param)
+            else:
+                output["error"] = f"Error: Could not get the file to process. \nRun 'more --help' for more info."
+    
+    for file in files:
+        if os.path.isabs(file):
+            path = file
+        elif not os.path.isabs(file):
+            new_dir = file
+            cwd = os.getcwd()
+            path = os.path.join(cwd, new_dir)
+
+        if path:
+            try:
+                with open(path, 'r') as file_:
+                    # Read in each line of the input file as is and
+                    # process it
+                    for whole_line in file_:                        
+                        line = whole_line.rstrip("\n")    # remove the
+                                                        # trailing 
+                                                        # newline but 
+                                                        # keep spaces 
+                                                        # intact 
+                        
+                        # If the line is longer than the width of the 
+                        # terminal, slice it and add it to the display 
+                        # buffer
+                        while len(line) > columns:
+                            display_buffer.append(line[:columns])
+                            line = line[columns:]
+                        # Otherwise, just add it to the display buffer
+                        display_buffer.append(line)
+            except FileNotFoundError:
+                output["error"] = f"Error: File {params} not found."
+            except Exception as e:
+                output["error"] = f"An unexpected error occurred: {e}"  
+            
+        else:
+            output["error"] = f"Error: {file} could not be found. \nRun 'more --help' for more info."
+            return output
+
+    # start the screen display at 0
+    viewport_start = 0
+    horiz_offset = 0
+    cursor_pos = 0
+    showing_help = False
+    l_cmd = ""
+    while True:
+        os.system("clear")
+        page = display_buffer[viewport_start : viewport_start + (lines - 1)]
+        for line in page:
+            print(line[horiz_offset:horiz_offset + columns])
+        
+        print(f":", end="", flush=True)
+        
+        key = getch()
+
+        N = 1
+
+        if isinstance(l_cmd, int):
+            N = l_cmd
+
+        # Not working
+        if key in ("h", "H"):
+            orig_buff = display_buffer.copy()
+            display_buffer.clear()
+            display_buffer.extend(less.__doc__.splitlines())
+            showing_help = True
+        elif key in ("q", "Q", "ZZ"):
+            if showing_help:
+                display_buffer = orig_buff
+                showing_help = False
+            else:
+                return output
+        elif key in ("f", "\x06", "\x16", " "):
+            viewport_start = min(viewport_start + (lines - 1), len(display_buffer) - (lines - 1))
+        elif key in ("e", "\x05", "j", "\x0e", "\n", "\r"):
+            viewport_start = min(viewport_start + 1, len(display_buffer) - (lines - 1))
+        elif key in ("y", "\x19", "k", "\x0b", "\x10"):
+            viewport_start = max(0, viewport_start - 1)
+        elif key in ("b", "\x02"):
+            viewport_start = max(0, viewport_start - (lines - 1))
+        elif key in ("z"):
+            viewport_start = min(viewport_start + (lines - 1), len(display_buffer) - (lines - 1))
+            N = len(display_buffer) - (lines - 1)
+        elif key in ("w"):
+            viewport_start = max(0, viewport_start - (lines - 1))
+            N = len(display_buffer) - (lines - 1)
+        elif key in ("d", "\x04"):
+            viewport_start = min(viewport_start + (lines//2), len(display_buffer) - (lines - 1))
+            N = lines//2
+        elif key in ("u", "\x15"):
+            viewport_start = max(0, viewport_start - (lines//2))
+            N = lines//2
+        elif key in ("F"):
+            viewport_start = len(display_buffer) - lines - 1
+        elif key in ("r", "\x12", "\x0c"):
+            viewport_start = viewport_start
+        elif key in "\x1b":
+            null = getch()
+            direction = getch()
+            if direction in "A":
+                viewport_start = 0
+            if direction in "B":
+                viewport_start = min(viewport_start + (lines - 1), len(display_buffer) - (lines - 1))
+            if direction in "C":
+                horiz_offset += columns // 2
+            if direction in "D":
+                horiz_offset = max(0, horiz_offset - (columns // 2))
+        else:
+            pass
 
 def ip(parts):
     '''
