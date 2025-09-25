@@ -818,6 +818,10 @@ def mv(parts):
         output["error"] = "Error. Command doesn't take flags."
         return output
     
+    if params is None or len(params) != 2:
+        output["error"] = "Error. Command takes two parameters."
+        return output
+    
     try:
         shutil.move(params[0], params[1])
     except FileNotFoundError:
@@ -829,7 +833,7 @@ def mv(parts):
 
     return output    
 
-def cat(file):
+def cat(parts):
     '''
     Usage: cat [FILE]...
 
@@ -837,12 +841,32 @@ def cat(file):
         cat f - g   Output f's contents, then standard input, then g's contents.
         cat         Copy standard input to standard output.
     '''
+    
+    # Getting parsed parts
+    input = parts.get("input", None)
+    flags = parts.get("flags", None)
+    params = parts.get("params", None)
+    
+    # Dictionary to return
     output = {"output": None, "error": None}
+
+    # Catching bad commands
+    if input or flags:
+        output["error"] = f"{Fore.RED}Error: 'cat' should not have input or flags.{Style.RESET_ALL}\nRun 'cat --help' for more info."
+        return output
+    
+    # if no params, set file to None and read from stdin, else read file
+    if not params:
+        file = None
+    else:
+        file = params
 
      #if no file provided, read from stdin once
     if not file:
         output["output"] = sys.stdin.read()
         return output
+    
+    # Loop through files and read them
     for f in file:
         if f == '-':
             #read from standard input here
@@ -1486,6 +1510,10 @@ def more(parts):
     input = parts.get("input", None)
     flags = parts.get("flags", None)
     params = parts.get("params", None)
+    
+    if (not input and not params) or (input and params):
+        output["error"] = f"Error: 'more' needs either input or params."
+        return output
 
     if flags:
         output["error"] = f"Error: Command does not take flags."
@@ -2538,8 +2566,7 @@ if __name__ == "__main__":
                     elif command.get("cmd") == "history":
                         result = history(command)
                     elif command.get("cmd") == "cat":
-                        file = command.get("params")
-                        result = cat(file)
+                        result = cat(command)
                     elif command.get("cmd") == "wc":
                         result = wc(command)
                     elif command.get("cmd") == "cp":
