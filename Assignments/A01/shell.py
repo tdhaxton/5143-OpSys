@@ -62,6 +62,11 @@ from colorama import init, Fore, Style
 #from rich import print
 import shutil
 import re
+import termios
+
+# capture terminal settings before calling getch
+fd = sys.stdin.fileno()
+old_settings = termios.tcgetattr(fd)
 
 getch = Getch()  # create a new instance of class Getch
 # print(prompt)
@@ -769,7 +774,12 @@ def rm(parts):
         return output
     
     if flags == "-r":
-        shutil.rmtree(params[0])
+        try:
+            shutil.rmtree(params[0])
+        except FileNotFoundError:
+            output["error"] = f"Error: File {params[0]} not found."
+        except Exception as e:
+            output["error"] = f"An error occurred: {e}"
     elif flags == "--":
         try:
             os.remove(params[0])
@@ -1610,7 +1620,53 @@ def more(parts):
         if percent_displayed >= 100:
             return output
 
-def less(parts):
+def safe_input(prompt = "", cooked_settings=None):
+    '''
+    Function courtesy of ChatGPT for swapping between "raw" and "cooked" mode for less function searches
+    '''
+    fd = sys.stdin.fileno()
+    output = {"pattern" : None, "error" : None}
+    try:
+        if cooked_settings:
+            termios.tcsetattr(fd, termios.TCSADRAIN, cooked_settings)
+            output["pattern"] = input(prompt)
+    except Exception as e:
+        output["error"] = f"An unexpected error occurred: {e}"
+    return output
+
+def forward_search(disp_buf, view_start, pattern, m):
+    '''
+    Works with less to perform forward search. Takes the display buffer, start position, and user input pattern and searches forward within the document for the input pattern
+    '''
+    regex = re.compile(pattern, re.IGNORECASE)
+    for i in range(view_start, len(disp_buf)):
+        if regex.search(disp_buf[i]):
+            m.append(i)
+    if m:
+        return m
+    else:
+        return None
+
+def backward_search(disp_buf, view_start, pattern, m):
+    '''
+    works with less command to perform backward search. Takes the display buffer, start position, and user input pattern and searches backward within the document for in the input patter
+    '''
+    regex = re.compile(pattern, re.IGNORECASE)
+    for i in range(view_start, 0, -1):
+        if regex.search(disp_buf[i]):
+            m.append(i)
+    if m:
+        return m
+    else:
+        return None
+
+def highlight_pattern(m, d_b, pattern):
+    for match in m:
+        # Highlight all matches of the pattern in yellow
+        d_b[int(match)] = re.sub(re.escape(pattern), f"{Fore.YELLOW}{pattern}{Style.RESET_ALL}", d_b[int(match)])
+    return d_b
+
+def less(parts, old_settings):
     '''
     SUMMARY OF LESS COMMANDS
 
@@ -1630,17 +1686,21 @@ def less(parts):
     b  ^B  ESC-V      *  Backward one window
     z                 *  Forward  one window
     w                 *  Backward one window
-    ESC-SPACE         *  Forward  one window, but don't stop at end-of-file.
-    d  ^D             *  Forward  one half-window.
-    u  ^U             *  Backward one half-window.
-    ESC-> RightArrow  *  Right one half screen width (or N positions).
-    ESC-< LeftArrow   *  Left one half screen width (or N positions).
-    ESC-} ^RightArrow *  Right to last column displayed.
-    ESC-{ ^LeftArrow  *  Left  to first column.
-    F                 *  Forward forever; like "tail -f"
+    d  ^D             *  Forward  one half-window
+    u  ^U             *  Backward one half-window
+    ESC-> RightArrow  *  Right one half screen width.
+    ESC-< LeftArrow   *  Left one half screen width.
+    r  ^R  ^L         *  Repaint screen.
+    R                 *  Repaint screen, discarding buffered input.
          ----------------------------------------------------
-         Default "window" is the screen height.
-         Default half-window" is half of the screen height.
+         "Window" is the screen height.
+         "Half-window" is half of the screen height.
+    --------------------------------------------------------------------
+
+    SEARCHING
+
+    /pattern          *  Search forward for matching line.
+    ?pattern          *  Search backward for matching line.
     --------------------------------------------------------------------
     '''
 
@@ -1649,6 +1709,8 @@ def less(parts):
     files = []
     # display buffer to hold input data
     display_buffer = []
+    # matches for search results
+    matches = []
 
     # Getting parsed parts
     input = parts.get("input", None)
@@ -1682,6 +1744,7 @@ def less(parts):
                 files.append(param)
             else:
                 output["error"] = f"Error: Could not get the file to process. \nRun 'more --help' for more info."
+                return output
     
     for file in files:
         if os.path.isabs(file):
@@ -1726,6 +1789,7 @@ def less(parts):
     cursor_pos = 0
     showing_help = False
     l_cmd = ""
+    old_buff = display_buffer
     while True:
         os.system("clear")
         page = display_buffer[viewport_start : viewport_start + (lines - 1)]
@@ -1736,12 +1800,6 @@ def less(parts):
         
         key = getch()
 
-        N = 1
-
-        if isinstance(l_cmd, int):
-            N = l_cmd
-
-        # Not working
         if key in ("h", "H"):
             orig_buff = display_buffer.copy()
             display_buffer.clear()
@@ -1763,20 +1821,43 @@ def less(parts):
             viewport_start = max(0, viewport_start - (lines - 1))
         elif key in ("z"):
             viewport_start = min(viewport_start + (lines - 1), len(display_buffer) - (lines - 1))
-            N = len(display_buffer) - (lines - 1)
         elif key in ("w"):
             viewport_start = max(0, viewport_start - (lines - 1))
-            N = len(display_buffer) - (lines - 1)
         elif key in ("d", "\x04"):
             viewport_start = min(viewport_start + (lines//2), len(display_buffer) - (lines - 1))
-            N = lines//2
         elif key in ("u", "\x15"):
             viewport_start = max(0, viewport_start - (lines//2))
-            N = lines//2
         elif key in ("F"):
             viewport_start = len(display_buffer) - lines - 1
         elif key in ("r", "\x12", "\x0c"):
-            viewport_start = viewport_start
+            if old_buff:
+                display_buffer = old_buff
+            else:
+                pass
+        # Need to fix prompt
+        elif key == "/":
+            results = {"pattern" : None, "error" : None}
+            results = safe_input("/", old_settings)
+            if results["error"]:
+                output["error"] = results["error"]
+                return output
+            else:
+                result = forward_search(display_buffer, viewport_start, results["pattern"], matches)
+            if result:
+                display_buffer = old_buff
+                display_buffer = highlight_pattern(matches, display_buffer, results["pattern"])
+                viewport_start = int(matches[0])
+        elif key == "?":
+            results = {"pattern" : None, "error" : None}
+            results = safe_input("?", old_settings)
+            if results["error"]:
+                output["error"] = results["error"]
+                return output
+            result = backward_search(display_buffer, viewport_start, results["pattern"], matches)
+            if result:
+                display_buffer = old_buff
+                display_buffer = highlight_pattern(matches, display_buffer, results["pattern"])
+                viewport_start = int(matches[0])
         elif key in "\x1b":
             null = getch()
             direction = getch()
@@ -1789,7 +1870,9 @@ def less(parts):
             if direction in "D":
                 horiz_offset = max(0, horiz_offset - (columns // 2))
         else:
-            pass
+            l_cmd = l_cmd[:cursor_pos] + key + l_cmd[cursor_pos:]
+            cursor_pos += 1
+            print(l_cmd)
 
 def ip(parts):
     '''
@@ -2285,6 +2368,16 @@ def write_to_history(cmd):
     # Append command to the file
     with open(history_file, "a") as file:
         file.write(cmd + "\n")
+
+def write_to_file(data, filename):
+    output = {"output": None, "error": None}
+    try:
+        with open(filename, "w") as f:
+            f.write(data)
+    except Exception as e:
+        output["error"] = f"An unexpected error occurred: {e}"
+        return output
+    return output
        
 def clear():
     """
@@ -2307,7 +2400,7 @@ def parse_cmd(cmd_input):
         
         # Need to have a check while procession that if error has error in it, stop processing.
         
-        d = {"input" : None, "cmd" : None, "params" : [], "flags" : None, "error" : None}
+        d = {"input" : None, "cmd" : None, "params" : [], "flags" : None, "error" : None, "out" : None}
         subparts = cmd.strip().split()
         d["cmd"] = subparts[0]
         
@@ -2318,6 +2411,13 @@ def parse_cmd(cmd_input):
                 d["flags"] = item
             else:
                 d["params"].append(item)
+
+        # Check parameters for output redirection operator and handle
+        if ">" in d["params"]:
+            idx = d["params"].index(">")
+            d["out"] = d["params"][idx + 1]
+            del d["params"][idx + 1]
+            del d["params"][idx]
                 
         # Appending the correct dictionary to command list
         command_list.append(d)
@@ -2594,11 +2694,13 @@ if __name__ == "__main__":
                     elif command.get("cmd") == "more":
                         result = more(command)
                     elif command.get("cmd") == "less":
-                        result = less(command)
+                        result = less(command, old_settings)
                             
                 # Printing result to screen
                 if result["error"]:
                     print(result["error"])
+                elif command.get("out"):
+                    result = write_to_file(result["output"], command.get("out"))
                 elif result["output"]:
                     print(result["output"])
 
