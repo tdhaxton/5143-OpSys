@@ -932,10 +932,13 @@ def grep(parts):
     Example: grep 'hello world' menu.h main.c
     PATTERNS can contain multiple patterns separated by newlines.
 
-    When FILE is '-', read standard input. With no FILE, read '.' if
-    recursive, '-' otherwise.
-    Exit status is 0 if any line is selected, 1 otherwise;
-    if any error occurs, the exit status is 2.
+    If no file is given, it will match with what has been received as
+    input from previous command. There can only be one pattern.
+    
+    Available flags:
+    -i : ignore case
+    -l : only print names of files with matching lines
+    -c : only print a count of matching lines per file 
     '''
     
     # These are lists
@@ -946,12 +949,29 @@ def grep(parts):
     # Dictionary to return
     output = {"output" : None, "error" : None}
     
-    # list to contain matches
-    match = []
+    # list that stores lines that contain matches of patter
+    line_match = []
+    
+    # storing files that match the pattern
+    file_match = []
+    
+    # list to store split params
+    files = []
+    pattern_parts = []
+    
+    # Variable to store count of matches
+    count_match = 0
+        
+    # if -i in flag, ignore case (true), else case sensitive (false)
+    flags = flags or ""
+    i_flag = re.IGNORECASE if "i" in flags else 0
+    
+    # Variable to store lines with matches
+    highlighted = ""
     
     # Catching bad commands
-    if flags:
-        output["error"] = f"{Fore.RED}Error: 'grep' doesn't take flags.{Style.RESET_ALL} \nRun 'grep --help' for more info."
+    if flags not in [None, "-l", "-i", "-c", "-li", "-il", "-lc", "-cl", "-ic", "-ci", "-lic", "-lci", "-ilc", "-icl", "-cli", "-cil"]:
+        output["error"] = f"{Fore.RED}Error: 'grep' only takes flags '-l', '-i', '-c'.{Style.RESET_ALL} \nRun 'grep --help' for more info."
         return output
 
     if not params:
@@ -973,11 +993,7 @@ def grep(parts):
     if len(params) > 50:
         output["error"] = f"{Fore.RED}Error: Params list too long.{Style.RESET_ALL} \nRun 'grep --help' for more info."
     
-    # list to store split params
-    files = []
-    pattern_parts = []
-    
-    # Loop through params to clean and append to correct list
+    # Loop through params to separate files and pattern
     for param in params:
         clean = param.strip("'\"")
         
@@ -997,26 +1013,52 @@ def grep(parts):
         input = input.strip("'")
     
     # Store the input or files to process on
+    # one of them must be None due to previous checks
     source = input or files
     
     if not source:
         output["error"] = f"{Fore.RED}Error: Could not get the file or string to process.{Style.RESET_ALL} \nRun 'grep --help' for more info."
+        return output
     
-    # if source exists and is a string
+    # if source is a string
     if isinstance(source, str):
         
         # Split the lines of the source and process
         for line in source.splitlines():
-            if pattern in line:
+            
+            # Searching for pattern in line
+            match = re.search(re.escape(pattern), line, i_flag)
+            
+            # if no flags, and pattern matches a line, highlight it and store the whole line
+            if match and ("i" in flags or not flags):
                 
-                # Highlight all matches of the pattern in yellow
-                highlighted = re.sub(re.escape(pattern), f"{Fore.YELLOW}{pattern}{Style.RESET_ALL}", line)
-                match.append(highlighted)
+                # Highlight all matches of the pattern in yellow and store the whole line
+                # Using lambda to perserve original case | Got from ChatGPT
+                highlighted = re.sub(re.escape(pattern), lambda m: f"{Fore.YELLOW}{m.group(0)}{Style.RESET_ALL}", line, flags=i_flag)
+                line_match.append(highlighted)
+            
+            # -l flag (list file names once if match found)
+            if match and "l" in flags:
+                output["output"] = f"{Fore.MAGENTA}(standard input){Style.RESET_ALL}"
+                return output
+
+            # -c flag (count matching lines)
+            if match and "c" in flags:
+                count_match += 1
         
-        # Converting to string and returning
-        result = "\n".join(match)
-        output["output"] = result
+        # If -c in flag, only return count of matches
+        if "c" in flags:
+            output["output"] = str(count_match)
+            
+        # If line_match was filled, return it
+        elif line_match:
+            output["output"] = "\n".join(line_match)
+        else:
+            output["error"] = f"{Fore.YELLOW}No matches found for '{pattern}'{Style.RESET_ALL}"
+            
+        # return output
         return output
+ 
         
     # Determine if item is a file
     for file in source:
@@ -1035,35 +1077,62 @@ def grep(parts):
                 cwd     = os.getcwd()
                 path    = os.path.join(cwd, new_dir)
                 
-            # Match patter with contents in file
+            # Match pattern with contents in file
             if path:
                 with open(path, 'r') as file_:
                     for line in file_:
-                        if pattern in line:
+                        
+                        # Searching for pattern in line
+                        match = re.search(re.escape(pattern), line, i_flag)
                             
-                            # Highlight the pattern in green (Got from GPT)
-                            highlighted = re.sub(re.escape(pattern),f"{Fore.YELLOW}{pattern}{Style.RESET_ALL}", line)
-                            
-                            # Output info differently depending on if processing one or many files
-                            if len(files) > 1:
-                                match.append(f"{file}: {highlighted}")
-                            else:
-                                match.append(f"{highlighted}")                                
-                            
-            # Error is could not get path
-            else:
-                output["error"] = f"{Fore.RED}Error: {file} could not be found.{Style.RESET_ALL} \nRun 'grep --help' for more info."
-                return output
+                        # if no flags, and pattern matches a line, highlight it and store the whole line
+                        if match and ("i" in flags or not flags):
+                
+                            # Highlight all matches of the pattern in yellow and store the whole line
+                            # Using lambda to perserve original case | Got from ChatGPT
+                            highlighted = re.sub(re.escape(pattern), lambda m: f"{Fore.YELLOW}{m.group(0)}{Style.RESET_ALL}", line, flags=i_flag)
+
+                        # if -l in flag, only return the name of the file if pattern matches
+                        if match and "l" in flags:
+                            if file not in file_match:
+                                file_match.append(file)
             
-        # Error if one of the files does not exist
-        else:
-            output["error"] = f"{Fore.RED}Error: {file} is not a file.{Style.RESET_ALL} \nRun 'grep --help' for more info."
-            return output
-        
-    # Converting to string and returning
-    result = "".join(match)
-    output["output"] = result
-    return output    
+                        # if -c in flag, count numbers of lines that contain the pattern
+                        if match and "c" in flags:
+                            count_match += 1
+                            
+                        # If multiple files, include the file name in output
+                        if len(files) > 1 and "l" not in flags and "c" not in flags and highlighted not in line_match:
+                            line_match.append(f"{Fore.MAGENTA}{file}{Style.RESET_ALL}: {highlighted}")
+                            
+                        # If only one file, do not include that file name in output
+                        elif len(files) == 1 and "l" not in flags and "c" not in flags and highlighted not in line_match:
+                            line_match.append(f"{highlighted}")
+                        
+            # Error if one of the files does not exist
+            else:
+                output["error"] = f"{Fore.RED}Error: {file} is not a file.{Style.RESET_ALL} \nRun 'grep --help' for more info."
+                return output
+                        
+    # If -l flag, only return files that matched
+    if file_match:
+        result = "\n".join(f"{Fore.MAGENTA}{f}{Style.RESET_ALL}" for f in file_match)
+        output["output"] = result
+        return output
+    
+    # If -c in flag, only return count of matches
+    if "c" in flags:
+        output["output"] = str(count_match)
+            
+    # If line_match was filled, return it
+    elif line_match:
+        output["output"] = "".join(line_match)
+                        
+    else:
+        output["error"] = f"{Fore.YELLOW}No matches found for '{pattern}'{Style.RESET_ALL}"
+            
+    # return output
+    return output
 
 def wc(parts):
     '''
@@ -1716,6 +1785,11 @@ def less(parts, old_settings):
     input = parts.get("input", None)
     flags = parts.get("flags", None)
     params = parts.get("params", None)
+    
+    # Filter out bad commands
+    if (not input and not params) or (input and params):
+        output["error"] = f"Error: 'more' needs either input or params."
+        return output
 
     if flags:
         output["error"] = f"Error: Command does not take flags."
@@ -2164,7 +2238,46 @@ def history(parts):
     # If user added on top of history command
     else:
         output["error"] = "Error, history command must not have any params, input, or flags."
+
+def if_not_x_command(command_list, cmd):
+    """
+    !x Command
+
+    Re-executes the most recent command in history that begins with the character 'x'.  
+    This is similar to history expansion in Unix shells.
+
+    Examples:
+        history
+        ls
+        !l      # Repeats the last command that began with 'l' (in this case, 'ls')
+
+    Notes:
+        - Only works with single commands, not pipelines or compound commands.
+        - Only searches backwards through the stored command history.
+        - If no matching command is found, an error message is returned.
+        - Case-sensitive by default.
+    """
     
+    if (len(command_list) == 1 
+        and command_list[0].get("cmd").startswith("!") 
+        and command_list[0].get("cmd")[1:].isnumeric()):
+        
+        # Get the cmd and send to function.
+        result = cmd_from_history(command_list[0].get("cmd"))
+
+        if result["error"]:
+            # Set command list to zero
+            command_list = []
+        else:
+            # Setting command_list to result command from !x command
+            command_list = parse_cmd(result["output"])
+            cmd = result["output"]
+            result["output"] = None
+
+            print(cmd)
+
+    return command_list, cmd
+
 def help(parts):
     """
     Display documentation for available commands.
@@ -2255,11 +2368,14 @@ def help(parts):
         elif cmd == "!x":
             output["output"] += cmd_from_history.__doc__
             
-        if cmd == "more":
+        elif cmd == "more":
             output["output"] += more.__doc__
 
-        if cmd == "less":
+        elif cmd == "less":
             output["output"] += less.__doc__
+            
+        elif cmd == "!x":
+            output["output"] += if_not_x_command.__doc__
            
         '''
         if cmd == "head":
@@ -2407,8 +2523,14 @@ def parse_cmd(cmd_input):
         # Going thorugh the rest of the subparts to classify and store correctly
         for item in subparts[1:]:
             
+            # Storing flags and params
             if item.startswith("-"):
-                d["flags"] = item
+                
+                # Check if flags already exist
+                if d["flags"]:
+                    d["error"] = f"{Fore.RED}Error: Flags must be combined.{Style.RESET_ALL}"
+                else:
+                    d["flags"] = item
             else:
                 d["params"].append(item)
 
@@ -2601,39 +2723,16 @@ if __name__ == "__main__":
                 command_list = parse_cmd(cmd)
                 result = {"output" : None, "error" : None}
                 
-                # Handle if user wants to run !x command
-                if len(command_list) == 1 and command_list[0].get("cmd").startswith("!") and command_list[0].get("cmd")[1].isnumeric():
-                    
-                    # Get the cmd and send to function.
-                    # It includes ! but we will remove in function
-                    result = cmd_from_history(command_list[0].get("cmd"))
-                        
-                    #Setting cmd to 'x' command from !x
-                    if result["error"]:
-                            
-                        # Set command list to zero
+                # Check if error while parsing command
+                for command in command_list:
+                    if command.get("error"):
+                        result["error"] = command.get("error")
                         command_list = []
-                            
-                    # Setting command_list to result command from !x command
-                    else:
-                        command_list = parse_cmd(result["output"])
-                        cmd = result["output"]
-                            
-                        # Resetting result
-                        result["output"] = None
-                            
-                        # Printing to the user what is about to be executed
-                        print()
-                        print("Command(s) being executed.")
-                        print("--------------------")
-                        for command in command_list:
-                            print("Command:", command.get("cmd"))
-                            print("Flags:", command.get("flags"))
-                            print("Params:", command.get("params"))
-                            print("--------------------")
-                        print()
+                        
+                # Handling !x command
+                command_list, cmd = if_not_x_command(command_list, cmd)
 
-            
+                # Executing each command in the command list
                 while len(command_list) != 0:
             
                     # Pop first command off of the command list
@@ -2651,8 +2750,7 @@ if __name__ == "__main__":
                     # Kill execution if error
                     if result["error"]:
                         break
-
-                    # Executing commands
+                        
                     if command.get("flags") == "--help" and not command.get("params") and not command.get("input"):
                         result = help(command)     
                     elif command.get("cmd") == "cd":
