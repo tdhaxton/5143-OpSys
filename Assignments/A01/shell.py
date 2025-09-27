@@ -970,7 +970,7 @@ def grep(parts):
     highlighted = ""
     
     # Catching bad commands
-    if flags not in [None, "-l", "-i", "-c", "-li", "-il", "-lc", "-cl", "-ic", "-ci", "-lic", "-lci", "-ilc", "-icl", "-cli", "-cil"]:
+    if flags not in ["", "-l", "-i", "-c", "-li", "-il", "-lc", "-cl", "-ic", "-ci", "-lic", "-lci", "-ilc", "-icl", "-cli", "-cil"]:
         output["error"] = f"{Fore.RED}Error: 'grep' only takes flags '-l', '-i', '-c'.{Style.RESET_ALL} \nRun 'grep --help' for more info."
         return output
 
