@@ -2560,7 +2560,9 @@ def help(parts):
             
         elif cmd == "!x":
             output["output"] += if_not_x_command.__doc__
-           
+
+        elif cmd == "head":
+            output["output"] += head.__doc__
         '''
         if cmd == "head":
             output["output"] += head.__doc__
@@ -2951,6 +2953,8 @@ if __name__ == "__main__":
                         result = history(command)
                     elif command.get("cmd") == "cat":
                         result = cat(command)
+                    elif command.get("cmd") == "head":
+                        result = head(command)
                     elif command.get("cmd") == "wc":
                         result = wc(command)
                     elif command.get("cmd") == "cp":
