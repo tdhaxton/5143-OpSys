@@ -773,21 +773,26 @@ def rm(parts):
         output["error"] = "Error. Command should not have an input."
         return output
     
-    if flags == "-r" or flags == "-rf" or flags == "-fr":
+    if flags == "-r":
+        print(f"Press 'Y' if you are certain you want to delete {params[0]} and all of its contents.")
+        val = getch()
+        if val.lower() == 'y':
+            try:
+                shutil.rmtree(params[0])
+            except FileNotFoundError:
+                output["error"] = f"Error: File {params[0]} not found."
+            except Exception as e:
+                output["error"] = f"An error occurred: {e}"
+        else:
+            return output
+    elif flags == "-rf" or flags == "-fr":
         try:
             shutil.rmtree(params[0])
         except FileNotFoundError:
             output["error"] = f"Error: File {params[0]} not found."
         except Exception as e:
             output["error"] = f"An error occurred: {e}"
-    elif flags == "--":
-        try:
-            os.remove(params[0])
-        except FileNotFoundError:
-            output["error"] = f"Error: File {params[0]} not found."
-        except Exception as e:
-            output["error"] = f"An error occurred: {e}"
-    else:
+    elif flags == "-f":
         if os.path.isdir(params[0]):
             try:
                 os.rmdir(params[0])
@@ -804,6 +809,40 @@ def rm(parts):
                 output["error"] = f"Error: File {params[0]} not found."
             except Exception as e:
                 output["error"] = f"An error occurred: {e}"
+    elif flags == "--":
+        try:
+            os.remove(params[0])
+        except FileNotFoundError:
+            output["error"] = f"Error: File {params[0]} not found."
+        except Exception as e:
+            output["error"] = f"An error occurred: {e}"
+    else:
+        if os.path.isdir(params[0]):
+            print(f"You are attempting to remove directory {params[0]}. Press 'Y' to proceed.")
+            val = getch()
+            if val.lower() == 'y':
+                try:
+                    os.rmdir(params[0])
+                except FileNotFoundError:
+                    output["error"] = f"Error: File {params[0]} not found."
+                except OSError as e:
+                    output["error"] = f"Error deleting directory {params[0]}    : {e}"
+                except Exception as e:
+                    output["error"] = f"An error occurred: {e}"
+            else:
+                return output
+        else:
+            print(f"You are attempting to remove {params[0]}. Press 'Y' to proceed.")
+            val = getch()
+            if val.lower() == 'y':
+                try:
+                    os.remove(params[0])
+                except FileNotFoundError:
+                    output["error"] = f"Error: File {params[0]} not found."
+                except Exception as e:
+                    output["error"] = f"An error occurred: {e}"
+            else:
+                return output
     
     return output
 
