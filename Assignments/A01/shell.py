@@ -773,7 +773,7 @@ def rm(parts):
         output["error"] = "Error. Command should not have an input."
         return output
     
-    if flags == "-r":
+    if flags == "-r" or flags == "-rf" or flags == "-fr":
         try:
             shutil.rmtree(params[0])
         except FileNotFoundError:
