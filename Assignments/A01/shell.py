@@ -3249,77 +3249,77 @@ if __name__ == "__main__":
                     
                     # Making sure valid command
                     if command.get("cmd") not in available_commands:
-                        result["error"] = f"Error. command '{command.get("cmd")}' is not in list of avaiable commands."
+                        result["error"] = f"Error. command '{command.get("cmd")}' is not in list of available commands."
                         
                     # If there is output in the previous command and command has not input
                     # make the output to the previous command the input to the next
                     if result["output"] and not command["input"]:
                         command["input"] = result["output"]                   
                     
-            # Handle input redirection from file
-            if command.get("in_file"):
-                try:
-                    with open(command.get("in_file"), 'r') as f:
-                        command["input"] = f.read()
-                except FileNotFoundError:
-                    result["error"] = f"Error: File {command.get("in_file")} not found."
-                    break
-                except Exception as e:
-                    result["error"] = f"An unexpected error occurred while reading input file: {e}"
-                    break
-                
-            # Kill execution if error
-            if result["error"]:
-                break
-                
-            if command.get("flags") == "--help" and not command.get("params") and not command.get("input"):
-                result = help(command)     
-            elif command.get("cmd") == "cd":
-                result = cd(command)
-            elif command.get("cmd") == "ls":
-                result = ls(command)
-            elif command.get("cmd") == "pwd":
-                result = pwd_()
-            elif command.get("cmd") == "mkdir":
-                result = mkdir(command)
-            elif command.get("cmd") == "head":
-                result = head(command)
-            elif command.get("cmd") == "history":
-                result = history(command)
-            elif command.get("cmd") == "cat":
-                result = cat(command)
-            elif command.get("cmd") == "head":
-                result = head(command)
-            elif command.get("cmd") == "tail":
-                result = tail(command)
-            elif command.get("cmd") == "wc":
-                result = wc(command)
-            elif command.get("cmd") == "cp":
-                result = cp(command)
-            elif command.get("cmd") == "mv":
-                result = mv(command)
-            elif command.get("cmd") == "rm":
-                result = rm(command)
-            elif command.get("cmd") == "grep":
-                result = grep(command)
-            elif command.get("cmd") == "sort":
-                result = sort(command)
-            elif command.get("cmd") == "chmod":
-                result = chmod(command)
-            elif command.get("cmd") == "ip":
-                result = ip(command)
-            elif command.get("cmd") == "date":
-                result = date(command)
-            elif command.get("cmd") == "clear":
-                result = clear_screen(command)
-            elif command.get("cmd") == "run":
-                result = run(command)
-            elif command.get("cmd") == "commands":
-                result = list_of_commands(command)
-            elif command.get("cmd") == "more":
-                result = more(command)
-            elif command.get("cmd") == "less":
-                result = less(command, old_settings)
+                    # Handle input redirection from file
+                    if command.get("in_file"):
+                        try:
+                            with open(command.get("in_file"), 'r') as f:
+                                command["input"] = f.read()
+                        except FileNotFoundError:
+                            result["error"] = f"Error: File {command.get("in_file")} not found."
+                            break
+                        except Exception as e:
+                            result["error"] = f"An unexpected error occurred while reading input file: {e}"
+                            break
+                        
+                    # Kill execution if error
+                    if result["error"]:
+                        break
+                        
+                    if command.get("flags") == "--help" and not command.get("params") and not command.get("input"):
+                        result = help(command)     
+                    elif command.get("cmd") == "cd":
+                        result = cd(command)
+                    elif command.get("cmd") == "ls":
+                        result = ls(command)
+                    elif command.get("cmd") == "pwd":
+                        result = pwd_()
+                    elif command.get("cmd") == "mkdir":
+                        result = mkdir(command)
+                    elif command.get("cmd") == "head":
+                        result = head(command)
+                    elif command.get("cmd") == "history":
+                        result = history(command)
+                    elif command.get("cmd") == "cat":
+                        result = cat(command)
+                    elif command.get("cmd") == "head":
+                        result = head(command)
+                    elif command.get("cmd") == "tail":
+                        result = tail(command)
+                    elif command.get("cmd") == "wc":
+                        result = wc(command)
+                    elif command.get("cmd") == "cp":
+                        result = cp(command)
+                    elif command.get("cmd") == "mv":
+                        result = mv(command)
+                    elif command.get("cmd") == "rm":
+                        result = rm(command)
+                    elif command.get("cmd") == "grep":
+                        result = grep(command)
+                    elif command.get("cmd") == "sort":
+                        result = sort(command)
+                    elif command.get("cmd") == "chmod":
+                        result = chmod(command)
+                    elif command.get("cmd") == "ip":
+                        result = ip(command)
+                    elif command.get("cmd") == "date":
+                        result = date(command)
+                    elif command.get("cmd") == "clear":
+                        result = clear_screen(command)
+                    elif command.get("cmd") == "run":
+                        result = run(command)
+                    elif command.get("cmd") == "commands":
+                        result = list_of_commands(command)
+                    elif command.get("cmd") == "more":
+                        result = more(command)
+                    elif command.get("cmd") == "less":
+                        result = less(command, old_settings)
                         
             # Printing result to screen
             if result["error"]:
