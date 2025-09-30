@@ -943,16 +943,17 @@ def cat(parts):
             try:
                 with open(f,'r') as file_handle:
                     file_data.append(file_handle.read())
-                    for file in file_data:
-                        new_string = new_string + file
-                    output["output"] = new_string
-
             except FileNotFoundError:
                 output["error"] = f"cat: {f}: No such file or directory\n"
                 return output
             except Exception as e:
                 output["error"] = f"cat: {f}: {str(e)}\n"
                 return output
+            
+            for file in file_data:
+                new_string = new_string + file
+            output["output"] = new_string
+    
     return output
 
 def head(parts):
@@ -3273,7 +3274,7 @@ if __name__ == "__main__":
             if result["error"]:
                 break
                 
-            if command.get("flags") == "--help" and not command.ge("params") and not command.get("input"):
+            if command.get("flags") == "--help" and not command.get("params") and not command.get("input"):
                 result = help(command)     
             elif command.get("cmd") == "cd":
                 result = cd(command)
@@ -3326,7 +3327,7 @@ if __name__ == "__main__":
             if result["error"]:
                 print(result["error"])
             elif command.get("out"):
-                result = write_to_file(result["output"], command.ge("out"))
+                result = write_to_file(result["output"], command.get("out"))
             elif result["output"]:
                 print(result["output"])
 
