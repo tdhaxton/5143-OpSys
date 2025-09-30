@@ -932,7 +932,6 @@ def cat(parts):
         return output
     
     file_data = []
-    new_string = ""
 
     # Loop through files and read them
     for f in file:
@@ -950,10 +949,9 @@ def cat(parts):
                 output["error"] = f"cat: {f}: {str(e)}\n"
                 return output
             
-            for file in file_data:
-                new_string = new_string + file
-            output["output"] = new_string
-    
+
+    # Convert output to string and return 
+    output["output"] = "".join(file_data)
     return output
 
 def head(parts):
