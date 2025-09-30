@@ -737,8 +737,8 @@ def cp(parts):
     # copy file command and exception handling
     try:
         shutil.copy(params[0], params[1])
-    except FileNotFoundError:
-        output["error"] = f"Error: File {params[0]} not found."
+    except FileNotFoundError as e:
+        output["error"] = f"{e}"
     except PermissionError:
         output["error"] = f"Error: Permission denied when copying {params[0]} to {params[1]}."
     except shutil.SameFileError:
@@ -3271,7 +3271,7 @@ if __name__ == "__main__":
                     # Kill execution if error
                     if result["error"]:
                         break
-                        
+
                     if command.get("flags") == "--help" and not command.get("params") and not command.get("input"):
                         result = help(command)     
                     elif command.get("cmd") == "cd":
