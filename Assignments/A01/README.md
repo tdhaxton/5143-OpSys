@@ -104,8 +104,8 @@ Run the `shell.py` file and use the following commands...
 | `left & right arrows` | Move cursor                                         | Cooper   |
 | `more`                |                                                     | Tim      |
 | `less`                |                                                     | Tim      |
-| `[program] > file`    |                                                     |          |
-| `[program] < file`    |                                                     |          |
+| `[program] > file`    |                                                     | Tim      |
+| `[program] < file`    |                                                     | Harika   |
 | `hfind`               | ? This may be extra                                 |          |
 | `sort`                | Sort data. Includes flags: -n, -r, -a               | Cooper   |
 
