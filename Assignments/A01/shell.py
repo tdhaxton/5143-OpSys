@@ -264,7 +264,7 @@ def ls(parts):
     # directory to store output information
     output = {"output" : None, "error" : None}
     
-    
+    # store command parts
     input = parts.get("input", None)
     flags = parts.get("flags", None)
     params = parts.get("params", None)    
@@ -713,12 +713,15 @@ def cp(parts):
           --help        display this help and exit
     '''
 
+    # store command inputs
     input = parts.get("input", None)
     flags = parts.get("flags", None)
     params = parts.get("params", None)
     
+    # dictionary for output
     output = {"output" : None, "error" : None}
 
+    # command error handling
     if input:
         output["error"] = "Error. Command should not have an input."
         return output
@@ -731,6 +734,7 @@ def cp(parts):
         output["error"] = "Error. Command takes two parameters."
         return output
 
+    # copy file command and exception handling
     try:
         shutil.copy(params[0], params[1])
     except FileNotFoundError:
@@ -763,16 +767,20 @@ def rm(parts):
         rm ./-foo
     '''
 
+    # store command inputs
     input = parts.get("input", None)
     flags = parts.get("flags", None)
     params = parts.get("params", None)
     
+    # dictionary for output
     output = {"output" : None, "error" : None}
 
+    # command error handling
     if input:
         output["error"] = "Error. Command should not have an input."
         return output
     
+    # -r flag removes requested file or directory with a prompt
     if flags == "-r":
         print(f"Press 'Y' if you are certain you want to delete {params[0]} and all of its contents.")
         val = getch()
@@ -785,6 +793,7 @@ def rm(parts):
                 output["error"] = f"An error occurred: {e}"
         else:
             return output
+    # -rf force removes requested file or directory without a prompt
     elif flags == "-rf" or flags == "-fr":
         try:
             shutil.rmtree(params[0])
@@ -792,6 +801,7 @@ def rm(parts):
             output["error"] = f"Error: File {params[0]} not found."
         except Exception as e:
             output["error"] = f"An error occurred: {e}"
+    # -f force removes requested file or empty directory without a prompt
     elif flags == "-f":
         if os.path.isdir(params[0]):
             try:
@@ -809,6 +819,7 @@ def rm(parts):
                 output["error"] = f"Error: File {params[0]} not found."
             except Exception as e:
                 output["error"] = f"An error occurred: {e}"
+    # removes files whose name begins with a dash (i.e., -foo.txt)
     elif flags == "--":
         try:
             os.remove(params[0])
@@ -816,6 +827,7 @@ def rm(parts):
             output["error"] = f"Error: File {params[0]} not found."
         except Exception as e:
             output["error"] = f"An error occurred: {e}"
+    # else prompt user that they are attempting to remove a file or folder
     else:
         if os.path.isdir(params[0]):
             print(f"You are attempting to remove directory {params[0]}. Press 'Y' to proceed.")
@@ -853,12 +865,15 @@ def mv(parts):
           --help        display this help and exit
     '''
 
+    # store command inputs
     input = parts.get("input", None)
     flags = parts.get("flags", None)
     params = parts.get("params", None)
     
+    # dictionary for output
     output = {"output" : None, "error" : None}
 
+    # input error handling
     if input:
         output["error"] = "Error. Command should not have an input."
         return output
@@ -871,6 +886,7 @@ def mv(parts):
         output["error"] = "Error. Command takes two parameters."
         return output
     
+    # move command and exception handling
     try:
         shutil.move(params[0], params[1])
     except FileNotFoundError:
@@ -915,6 +931,9 @@ def cat(parts):
         output["output"] = sys.stdin.read()
         return output
     
+    file_data = []
+    new_string = ""
+
     # Loop through files and read them
     for f in file:
         if f == '-':
@@ -923,11 +942,17 @@ def cat(parts):
         else:
             try:
                 with open(f,'r') as file_handle:
-                    output["output"] = file_handle.read()
+                    file_data.append(file_handle.read())
+                    for file in file_data:
+                        new_string = new_string + file
+                    output["output"] = new_string
+
             except FileNotFoundError:
                 output["error"] = f"cat: {f}: No such file or directory\n"
+                return output
             except Exception as e:
                 output["error"] = f"cat: {f}: {str(e)}\n"
+                return output
     return output
 
 def head(parts):
@@ -1990,17 +2015,21 @@ def more(parts):
 
      --help     display this help
     '''
+    # length and width of terminal for output buffer
     lines, columns = get_terminal_size()
+    # dictionary for output
     output = {"output" : None, "error" : None}
+    # to store input and parameter files
     files = []
     # display buffer to hold input data
     display_buffer = []
 
-    # Getting parsed parts
+    # Get parsed parts
     input = parts.get("input", None)
     flags = parts.get("flags", None)
     params = parts.get("params", None)
     
+    # input error handling
     if (not input and not params) or (input and params):
         output["error"] = f"Error: 'more' needs either input or params."
         return output
@@ -2009,6 +2038,7 @@ def more(parts):
         output["error"] = f"Error: Command does not take flags."
         return output
     
+    # if input is a file, add it to files list, otherwise parse it and add it to the display buffer
     if input:
         if os.path.isfile(input):
             files.append(input)
@@ -2026,13 +2056,18 @@ def more(parts):
                     line = line[columns:]
                 display_buffer.append(line)
 
+    # ensure parameter file is there, otherwise output error
     if params:
         for param in params:
             if os.path.isfile(param):
                 files.append(param)
             else:
                 output["error"] = f"Error: Could not get the file to process. \nRun 'more --help' for more info."
+                return output
     
+    # loop through files list and determine path
+    # if path is an absolute path, set it to path variable
+    # otherwise join the path of the current working directory to the file name, and set it to path variable
     for file in files:
         if os.path.isabs(file):
             path = file
@@ -2040,7 +2075,7 @@ def more(parts):
             new_dir = file
             cwd = os.getcwd()
             path = os.path.join(cwd, new_dir)
-
+        # if the path name is valid, open the file, otherwise handle any exceptions
         if path:
             try:
                 with open(path, 'r') as file_:
@@ -2070,24 +2105,33 @@ def more(parts):
             output["error"] = f"Error: {file} could not be found. \nRun 'more --help' for more info."
             return output
 
-    # start the screen display at 0
+    # variable for display buffer index
     viewport_start = 0
     while True:
+        # clear the screen
         os.system("clear")
+        # set page to the display buffer list indices from the viewport start value to one less than the number of lines available in the terminal window (last line is for the user prompt)
         page = display_buffer[viewport_start : viewport_start + (lines - 1)]
+        # print those lines to std out
         for line in page:
             print(line)
         
+        # get the percentage displayed on the screen by calculating the number of lines on the screen and dividing it by the number of lines in the display buffer, then multiplying by 100
         percent_displayed = ((viewport_start + len(page)) / len(display_buffer)) * 100
         print(f"--MORE-- {percent_displayed:.1f}%", end="", flush=True)
         
+        # gather user input without echoing to the screen or requiring 'Enter' key input
         key = getch()
+        # quits to shell
         if key == "q":
             return output
+        # advances one window
         elif key in " ":
             viewport_start = min(viewport_start + (lines - 1), len(display_buffer) - (lines - 1))
+        # advances one line
         elif key in ("\n", "\r"):
             viewport_start = min(viewport_start + 1, len(display_buffer) - (lines - 1))
+        # passes through arrow key escape sequence (\033) and Control Sequence Indidator ([) to value (A: Up, B: Down, C: Right, or D: Left). Up sets view to top of page, Down advances one window, Left and Right are ignored
         elif key in "\x1b":
             null = getch()
             direction = getch()
@@ -2104,8 +2148,11 @@ def safe_input(prompt = "", cooked_settings=None):
     '''
     Function courtesy of ChatGPT for swapping between "raw" and "cooked" mode for less function searches
     '''
+    # stores file descriptor from system
     fd = sys.stdin.fileno()
+    # output dictionary for output
     output = {"pattern" : None, "error" : None}
+    # sets terminal to normal input mode or handles any unexpected exceptions
     try:
         if cooked_settings:
             termios.tcsetattr(fd, termios.TCSADRAIN, cooked_settings)
@@ -2118,10 +2165,13 @@ def forward_search(disp_buf, view_start, pattern, m):
     '''
     Works with less to perform forward search. Takes the display buffer, start position, and user input pattern and searches forward within the document for the input pattern
     '''
+    # takes input pattern and compiles it for variable storage
     regex = re.compile(pattern, re.IGNORECASE)
+    # loops forward through display buffer, searching for pattern matches and adds them to input list, m
     for i in range(view_start, len(disp_buf)):
         if regex.search(disp_buf[i]):
             m.append(i)
+    # if any matches are found, m is returned, otherwise None is returned
     if m:
         return m
     else:
@@ -2131,18 +2181,22 @@ def backward_search(disp_buf, view_start, pattern, m):
     '''
     works with less command to perform backward search. Takes the display buffer, start position, and user input pattern and searches backward within the document for in the input patter
     '''
+    # takes input pattern and compiles it for variable storage
     regex = re.compile(pattern, re.IGNORECASE)
+    # loops backwards through display buffer, searching for pattern matches and adds them to input list, m
     for i in range(view_start, 0, -1):
         if regex.search(disp_buf[i]):
             m.append(i)
+    # if any matches are found, m is returned, otherwise None is returned
     if m:
         return m
     else:
         return None
 
 def highlight_pattern(m, d_b, pattern):
+    # loops through list
     for match in m:
-        # Highlight all matches of the pattern in yellow
+        # Replaces all input pattern matches with yellow font. Each match in list m is an index in the display buffer, so set the value data type to int and substitute the input pattern in the line with the pattern in yellow font
         d_b[int(match)] = re.sub(re.escape(pattern), f"{Fore.YELLOW}{pattern}{Style.RESET_ALL}", d_b[int(match)])
     return d_b
 
@@ -2184,15 +2238,18 @@ def less(parts, old_settings):
     --------------------------------------------------------------------
     '''
 
+    # length and width of terminal for output buffer
     lines, columns = get_terminal_size()
+    # dictionary for output
     output = {"output" : None, "error" : None}
+    # store input and parameter files
     files = []
     # display buffer to hold input data
     display_buffer = []
     # matches for search results
     matches = []
 
-    # Getting parsed parts
+    # Get parsed parts
     input = parts.get("input", None)
     flags = parts.get("flags", None)
     params = parts.get("params", None)
@@ -2206,6 +2263,7 @@ def less(parts, old_settings):
         output["error"] = f"Error: Command does not take flags."
         return output
     
+    # if input is a file, add it to files list, otherwise parse it and add it to the display buffer
     if input:
         if os.path.isfile(input):
             files.append(input)
@@ -2223,6 +2281,7 @@ def less(parts, old_settings):
                     line = line[columns:]
                 display_buffer.append(line)
 
+    # ensure parameter file is there, otherwise output error
     if params:
         for param in params:
             if os.path.isfile(param):
@@ -2231,6 +2290,9 @@ def less(parts, old_settings):
                 output["error"] = f"Error: Could not get the file to process. \nRun 'more --help' for more info."
                 return output
     
+    # loop through files list and determine path
+    # if path is an absolute path, set it to path variable
+    # otherwise join the path of the current working directory to the file name, and set it to path variable
     for file in files:
         if os.path.isabs(file):
             path = file
@@ -2239,6 +2301,7 @@ def less(parts, old_settings):
             cwd = os.getcwd()
             path = os.path.join(cwd, new_dir)
 
+        # if the path name is valid, open the file, otherwise handle any exceptions
         if path:
             try:
                 with open(path, 'r') as file_:
@@ -2268,81 +2331,112 @@ def less(parts, old_settings):
             output["error"] = f"Error: {file} could not be found. \nRun 'more --help' for more info."
             return output
 
-    # start the screen display at 0
+    # variable for display buffer index
     viewport_start = 0
+    # variable for horizontal offset of display buffer
     horiz_offset = 0
+    # variable for cursor position for user input prompt
     cursor_pos = 0
+    # sentinel variable to track help screen 
     showing_help = False
+    # less command user input prompt initialization
     l_cmd = ""
+    # stores display buffer for reset
     old_buff = display_buffer
     while True:
+        # clear the screen
         os.system("clear")
+        # set page to the display buffer list indices from the viewport start value to one less than the number of lines available in the terminal window (last line is for the user prompt)
         page = display_buffer[viewport_start : viewport_start + (lines - 1)]
+        # print those lines to std out
         for line in page:
             print(line[horiz_offset:horiz_offset + columns])
-        
+        # print prompt
         print(f":", end="", flush=True)
-        
+        # start getch
         key = getch()
-
+        # help menu
         if key in ("h", "H"):
             orig_buff = display_buffer.copy()
             display_buffer.clear()
             display_buffer.extend(less.__doc__.splitlines())
             showing_help = True
+        # quit to shell
         elif key in ("q", "Q", "ZZ"):
             if showing_help:
                 display_buffer = orig_buff
                 showing_help = False
             else:
                 return output
+        # forward one window
         elif key in ("f", "\x06", "\x16", " "):
             viewport_start = min(viewport_start + (lines - 1), len(display_buffer) - (lines - 1))
+        # forward one line
         elif key in ("e", "\x05", "j", "\x0e", "\n", "\r"):
             viewport_start = min(viewport_start + 1, len(display_buffer) - (lines - 1))
+        # backwards one line
         elif key in ("y", "\x19", "k", "\x0b", "\x10"):
             viewport_start = max(0, viewport_start - 1)
+        # backwards one window
         elif key in ("b", "\x02"):
             viewport_start = max(0, viewport_start - (lines - 1))
+        # forward one window
         elif key in ("z"):
             viewport_start = min(viewport_start + (lines - 1), len(display_buffer) - (lines - 1))
+        # backwards one window
         elif key in ("w"):
             viewport_start = max(0, viewport_start - (lines - 1))
+        # forward one-half window
         elif key in ("d", "\x04"):
             viewport_start = min(viewport_start + (lines//2), len(display_buffer) - (lines - 1))
+        # backwards one-half window
         elif key in ("u", "\x15"):
             viewport_start = max(0, viewport_start - (lines//2))
+        # backwards one window
         elif key in ("F"):
             viewport_start = len(display_buffer) - lines - 1
+        # reset buffer display
         elif key in ("r", "\x12", "\x0c"):
             if old_buff:
                 display_buffer = old_buff
             else:
                 pass
-        # Need to fix prompt
+        # forward search logic
         elif key == "/":
+            # dictionary to hold pattern
             results = {"pattern" : None, "error" : None}
+            # set shell to normal input mode and get user input
             results = safe_input("/", old_settings)
+            # error handling
             if results["error"]:
                 output["error"] = results["error"]
                 return output
             else:
+                # call forward search and get return
                 result = forward_search(display_buffer, viewport_start, results["pattern"], matches)
+            # if result is valid, set display buffer to original buffer, call highlight pattern function and update display buffer, and set viewport start index to the first match in the matches list
             if result:
                 display_buffer = old_buff
                 display_buffer = highlight_pattern(matches, display_buffer, results["pattern"])
                 viewport_start = int(matches[0])
+        # backward search logic
         elif key == "?":
+            # dictionary to hold pattern
             results = {"pattern" : None, "error" : None}
+            # set shell to normal input mode and get user input
             results = safe_input("?", old_settings)
+            # error handling
             if results["error"]:
                 output["error"] = results["error"]
                 return output
+            # call backward search function and get return
             result = backward_search(display_buffer, viewport_start, results["pattern"], matches)
+            # if result is valid, set display buffer to original buffer, call highlight pattern function and update display buffer, and set viewport start index to the first match in the matches list
             if result:
                 display_buffer = old_buff
                 display_buffer = highlight_pattern(matches, display_buffer, results["pattern"])
                 viewport_start = int(matches[0])
+        # passes through arrow key escape sequence (\033) and Control Sequence Indidator ([) to value (A: Up, B: Down, C: Right, or D: Left). Up sets view to top of page, Down advances one window, Left moves view one-half window left and Right moves view one-half window right
         elif key in "\x1b":
             null = getch()
             direction = getch()
@@ -2354,6 +2448,7 @@ def less(parts, old_settings):
                 horiz_offset += columns // 2
             if direction in "D":
                 horiz_offset = max(0, horiz_offset - (columns // 2))
+        # prints prompt and key input to screen
         else:
             l_cmd = l_cmd[:cursor_pos] + key + l_cmd[cursor_pos:]
             cursor_pos += 1
@@ -3174,66 +3269,66 @@ if __name__ == "__main__":
                     result["error"] = f"An unexpected error occurred while reading input file: {e}"
                     break
                 
-                    # Kill execution if error
-                    if result["error"]:
-                        break
+            # Kill execution if error
+            if result["error"]:
+                break
+                
+            if command.get("flags") == "--help" and not command.ge("params") and not command.get("input"):
+                result = help(command)     
+            elif command.get("cmd") == "cd":
+                result = cd(command)
+            elif command.get("cmd") == "ls":
+                result = ls(command)
+            elif command.get("cmd") == "pwd":
+                result = pwd_()
+            elif command.get("cmd") == "mkdir":
+                result = mkdir(command)
+            elif command.get("cmd") == "head":
+                result = head(command)
+            elif command.get("cmd") == "history":
+                result = history(command)
+            elif command.get("cmd") == "cat":
+                result = cat(command)
+            elif command.get("cmd") == "head":
+                result = head(command)
+            elif command.get("cmd") == "tail":
+                result = tail(command)
+            elif command.get("cmd") == "wc":
+                result = wc(command)
+            elif command.get("cmd") == "cp":
+                result = cp(command)
+            elif command.get("cmd") == "mv":
+                result = mv(command)
+            elif command.get("cmd") == "rm":
+                result = rm(command)
+            elif command.get("cmd") == "grep":
+                result = grep(command)
+            elif command.get("cmd") == "sort":
+                result = sort(command)
+            elif command.get("cmd") == "chmod":
+                result = chmod(command)
+            elif command.get("cmd") == "ip":
+                result = ip(command)
+            elif command.get("cmd") == "date":
+                result = date(command)
+            elif command.get("cmd") == "clear":
+                result = clear_screen(command)
+            elif command.get("cmd") == "run":
+                result = run(command)
+            elif command.get("cmd") == "commands":
+                result = list_of_commands(command)
+            elif command.get("cmd") == "more":
+                result = more(command)
+            elif command.get("cmd") == "less":
+                result = less(command, old_settings)
                         
-                    if command.get("flags") == "--help" and not command.get("params") and not command.get("input"):
-                        result = help(command)     
-                    elif command.get("cmd") == "cd":
-                        result = cd(command)
-                    elif command.get("cmd") == "ls":
-                        result = ls(command)
-                    elif command.get("cmd") == "pwd":
-                        result = pwd_()
-                    elif command.get("cmd") == "mkdir":
-                        result = mkdir(command)
-                    elif command.get("cmd") == "head":
-                        result = head(command)
-                    elif command.get("cmd") == "history":
-                        result = history(command)
-                    elif command.get("cmd") == "cat":
-                        result = cat(command)
-                    elif command.get("cmd") == "head":
-                        result = head(command)
-                    elif command.get("cmd") == "tail":
-                        result = tail(command)
-                    elif command.get("cmd") == "wc":
-                        result = wc(command)
-                    elif command.get("cmd") == "cp":
-                        result = cp(command)
-                    elif command.get("cmd") == "mv":
-                        result = mv(command)
-                    elif command.get("cmd") == "rm":
-                        result = rm(command)
-                    elif command.get("cmd") == "grep":
-                        result = grep(command)
-                    elif command.get("cmd") == "sort":
-                        result = sort(command)
-                    elif command.get("cmd") == "chmod":
-                        result = chmod(command)
-                    elif command.get("cmd") == "ip":
-                        result = ip(command)
-                    elif command.get("cmd") == "date":
-                        result = date(command)
-                    elif command.get("cmd") == "clear":
-                        result = clear_screen(command)
-                    elif command.get("cmd") == "run":
-                        result = run(command)
-                    elif command.get("cmd") == "commands":
-                        result = list_of_commands(command)
-                    elif command.get("cmd") == "more":
-                        result = more(command)
-                    elif command.get("cmd") == "less":
-                        result = less(command, old_settings)
-                            
-                # Printing result to screen
-                if result["error"]:
-                    print(result["error"])
-                elif command.get("out"):
-                    result = write_to_file(result["output"], command.get("out"))
-                elif result["output"]:
-                    print(result["output"])
+            # Printing result to screen
+            if result["error"]:
+                print(result["error"])
+            elif command.get("out"):
+                result = write_to_file(result["output"], command.ge("out"))
+            elif result["output"]:
+                print(result["output"])
 
 
             # Writing command to history
