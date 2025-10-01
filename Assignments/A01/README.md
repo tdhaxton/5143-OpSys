@@ -17,9 +17,6 @@ In this project, we will implement a basic "shell". A shell is a command-line in
 2. Read a command line from stdin.
 3. Tokenize (lexically analyze) the command a create an array of command parts (tokens).
 4. Parse the token array to identify the command and its arguments.
-5. Execute the command:
-    - If necessary, create a child process via `fork()`.
-    - The child process receives an additional input (arguments) and executes the appropriate command.
 
 ## Requirements
 
@@ -51,25 +48,19 @@ Our shell will support the following command types:
 - **Description**: Parses command-line arguments and executes the command.
 - **Concepts**: Command-line paramaters.
 
-### 4. **Background Execution (`&`)**
-
-- **Example** `ls &`
-- **Description**: Executes a command without blocking, allowing the shell to accept further input immediately.
-- **Concepts**: Background execution, signals, asynchronous execution.
-
-### 5. **Output Redirection**
+### 4. **Output Redirection**
 
 - **Example**: `ls > output.txt`
 - **Description**: Redirects the command output to a specified file.
 - **Concepts**: File operations, output redirection.
 
-### 6. **Input Redirection**
+### 5. **Input Redirection**
 
 - **Example**: `sort < inputfile.txt`
 - **Description**: Takes input from a file instead of the user’s input.
 - **Concepts**: File operations, input redirection.
 
-### 7. **Piping Commands**
+### 6. **Piping Commands**
 
 - **Example**: `ls -l | more`
 - **Description**: Passes the output of one command as input to another command.
@@ -106,7 +97,6 @@ Run the `shell.py` file and use the following commands...
 | `less`                |                                                     | Tim      |
 | `[program] > file`    |                                                     | Tim      |
 | `[program] < file`    |                                                     | Harika   |
-| `hfind`               | ? This may be extra                                 |          |
 | `sort`                | Sort data. Includes flags: -n, -r, -a               | Cooper   |
 
 ### Help
@@ -114,17 +104,7 @@ Run the `shell.py` file and use the following commands...
 - Every command will print help information if the user passes `--help` as an argument.
 
 ## Non-Working Components:
-- `cp`
-- `mv`
-- `rm`
-- `cat`
-- `head`
-- `tail`
-- `more`
-- `less`
-- `<`
-- `>`
-- `hfind`
+- All components have been inplemented to the extent of the scope of our project
 
 ## Extras
 - Color list contents if they are directory (blue) or executable (green)
