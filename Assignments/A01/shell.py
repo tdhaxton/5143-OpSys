@@ -188,10 +188,16 @@ def get_directory_items(directory = None, include_hidden = False):
     
     # Storing items from directory into items list
     if directory:
-        items = os.listdir(directory)
+        try:
+            items = os.listdir(directory)
+        except PermissionError:
+            return None
     
     if not directory:
-        items = os.listdir()
+        try:
+            items = os.listdir()
+        except PermissionError:
+            return None
         
         
     non_hidden_items = []
@@ -264,7 +270,7 @@ def ls(parts):
     # directory to store output information
     output = {"output" : None, "error" : None}
     
-    # store command parts
+    
     input = parts.get("input", None)
     flags = parts.get("flags", None)
     params = parts.get("params", None)    
@@ -272,10 +278,10 @@ def ls(parts):
     # Used to store directory from params
     ls_directory = ""
     
-    # ls should not have any input
     if input:
-        output["error"] = f"{Fore.RED}Error: {parts.get("cmd")} should not have input.{Style.RESET_ALL} \nRun 'ls --help' for more info."
-
+        output["error"] = f"{Fore.RED}Error. Ls command should not have input.{Style.RESET_ALL}\nTry 'ls --help for more info."
+        return output
+        
     # If user wants to ls a certain directory, grab the directory name if it's a directory
     if len(params) == 1:
         
@@ -295,13 +301,18 @@ def ls(parts):
             ls_directory = str_params
             
         elif not os.path.isdir(str_params):
-            output["error"] = f"Error. {str_params} is not a directory."
+            output["error"] = f"{Fore.RED}Error. {str_params} is not a directory.{Style.RESET_ALL}\nTry 'ls --help for more info."
             return output
-        
         
     # return error if there are more than 1 parameters
     elif len(params) > 1:
-        output["error"] = "ls has too many parameters"
+        output["error"] = f"{Fore.RED}ls has too many parameters{Style.RESET_ALL}. \nTry 'ls --help for more info."
+        return output
+    
+    # Check permissions before get contents
+    has_permission = get_directory_items(ls_directory)
+    if not has_permission:
+        output["error"] = f"{Fore.RED}Permission denied: cannot access {ls_directory}{Style.RESET_ALL}"
         return output
         
     # User wants to print list from current directory
@@ -310,6 +321,7 @@ def ls(parts):
         items = []
             
         for item in get_directory_items(ls_directory):
+            
             # Get full path to apply correct coloring
             full_path = os.path.join(ls_directory or os.getcwd(), item)
             items.append(color_filename(item, full_path))
@@ -349,8 +361,7 @@ def ls(parts):
             result = " ".join(items)
             output["output"] = result
             return output
-                
-                
+                      
         # Using -a alone or with -h prints all files including hidden
         elif option in ("-a","-ah", "-ha"):
             
@@ -385,7 +396,7 @@ def ls(parts):
                 file_info = os.stat(full_path)
                 total_size += file_info.st_blocks
             
-            # Printing size of directory
+            # Get size of directory 
             total_size = total_size // 2
             
             # Print details for each file
@@ -408,7 +419,6 @@ def ls(parts):
             output["output"] = result
             return output
         
-            
         # Using -al or -la prints all files in long format
         elif option in ("-al", "-la"):
                 
@@ -439,7 +449,7 @@ def ls(parts):
                 line = f"{item[0]:<10} {item[1]:<3}{item[2]:<8} {item[3]:<8}{item[4]:>8} {item[5]:<12} {item[6]}"
                 format_list.append(line)
             
-            # Convert to string and return
+            # Converting to string and returning
             result = f"Total size: {total_size}\n" + "\n".join(format_list)
             output["output"] = result
             return output
@@ -481,7 +491,7 @@ def ls(parts):
             return output
             
         # Using -alh or any combo of those three prints all files in long format with human readable sizes
-        elif option in ("-alh", "-ahl", "-lah", "-lha", "-hal", "-hla"):
+        elif option in ( "-lah", "-alh", "-ahl", "-lha", "-hal", "-hla"):
             
             total_size = 0
             items = []
@@ -515,7 +525,7 @@ def ls(parts):
             result = f"Total size: {total_size}\n" + "\n".join(format_list)
             output["output"] = result
             return output
-        
+           
         # Using -merica prints files in red white and blue 
         elif option == "-merica":
 
@@ -556,10 +566,10 @@ def ls(parts):
             result = f"Total size: {total_size}\n" + "\n".join(format_list)
             output["output"] = result
             return output
-            
+                    
         # Invalid option
         else:
-            output["error"] = "ls: invalid option. Try 'ls --help for more info."
+            output["error"] = f"{Fore.RED}ls: invalid flag: {flags}.{Style.RESET_ALL} \nTry 'ls --help for more info."
             return output
         
     output["error"] = "Error"
@@ -646,7 +656,7 @@ def cd(parts):
     # Dictionary to return
     output = {"output" : None, "error" : None}
     
-    
+    # Error handling
     if input:
         output["error"] = "Error. Command should not have an input."
         return output
@@ -655,16 +665,12 @@ def cd(parts):
         output["error"] = "Error. Command doesn't take flags."
         return output
         
-        
-    # Changing output dictionary so it can be checked
-        
     # Convert params list to string
     str_params = " ".join(params)
     
     # Remove single quotes if they exist
     str_params = str_params.strip("'")
     
-        
     # User wants to go to home directory
     if str_params == "" or str_params == "~":
         homedir = os.path.expanduser("~")
@@ -674,19 +680,21 @@ def cd(parts):
     # User wants to go to parent directory
     if str_params == "..":
         os.chdir("..")
-        return output
             
     # User wants to go to differnt directory
     elif os.path.isdir(str_params):
-        os.chdir(str_params)
-        return output
+        try:
+            os.chdir(str_params)
+        except PermissionError:
+            output["error"] = f"{Fore.RED}Permission denied: cannot access {str_params}{Style.RESET_ALL}"
+        except Exception as e:
+            output["error"] = f"Error changing directory: {e}"
             
-    # If path doesn't exist and params isn't empty
-    elif not os.path.isdir(str_params) and str_params != "":
-        output["error"] = f"Error. {str_params} is not a directory."
+    elif not os.path.isdir(str_params):
+        output["error"] = f"Directory not found: {str_params}"
         
     # Returning output dictionary
-    return output
+    return output 
 
 def pwd_():
     '''
@@ -1359,7 +1367,6 @@ def tail(parts):
 
     return output
 
-
 def grep(parts):
     '''
     Usage: grep PATTERNS [FILE]...
@@ -1438,14 +1445,21 @@ def grep(parts):
             
         # Else param is part of the pattern
         else:
+            if param.startswith(("'", '"')) and param.endswith(("'", '"')):
+                param = param[1:-1]
             pattern_parts.append(param)
             
-    pattern = " ".join(pattern_parts)  
+    pattern = " ".join(pattern_parts)
+    
+    if not input and not files:
+        output["error"] = f"{Fore.RED}Error: No files or input was given.{Style.RESET_ALL} \nRun 'grep --help' for more info."
+        return output
         
     # Convert input to string
     if input:
         input = "".join(input)
-        input = input.strip("'")
+        if input.startswith(("'", '"')) and input.endswith(("'", '"')):
+            input = input[1:-1]
     
     # Store the input or files to process on
     # one of them must be None due to previous checks
@@ -1514,40 +1528,48 @@ def grep(parts):
                 
             # Match pattern with contents in file
             if path:
-                with open(path, 'r') as file_:
-                    for line in file_:
-                        
-                        # Searching for pattern in line
-                        match = re.search(re.escape(pattern), line, i_flag)
-                            
-                        # if no flags, and pattern matches a line, highlight it and store the whole line
-                        if match and ("i" in flags or not flags):
                 
-                            # Highlight all matches of the pattern in yellow and store the whole line
-                            # Using lambda to perserve original case | Got from ChatGPT
-                            highlighted = re.sub(re.escape(pattern), lambda m: f"{Fore.YELLOW}{m.group(0)}{Style.RESET_ALL}", line, flags=i_flag)
+                try:
+                    with open(path, 'r') as file_:
+                        for line in file_:
+                            
+                            highlighted = None
+                            
+                            # Searching for pattern in line
+                            match = re.search(re.escape(pattern), line, i_flag)
+                                
+                            # if no flags, and pattern matches a line, highlight it and store the whole line
+                            if match and ("i" in flags or not flags):
+                    
+                                # Highlight all matches of the pattern in yellow and store the whole line
+                                # Using lambda to perserve original case | Got from ChatGPT
+                                highlighted = re.sub(re.escape(pattern), lambda m: f"{Fore.YELLOW}{m.group(0)}{Style.RESET_ALL}", line, flags=i_flag)
 
-                        # if -l in flag, only return the name of the file if pattern matches
-                        if match and "l" in flags:
-                            if file not in file_match:
-                                file_match.append(file)
-            
-                        # if -c in flag, count numbers of lines that contain the pattern
-                        if match and "c" in flags:
-                            count_match += 1
+                            # if -l in flag, only return the name of the file if pattern matches
+                            if match and "l" in flags:
+                                if file not in file_match:
+                                    file_match.append(file)
+                
+                            # if -c in flag, count numbers of lines that contain the pattern
+                            if match and "c" in flags:
+                                count_match += 1
+                                
+                            # If multiple files, include the file name in output
+                            if len(files) > 1 and "l" not in flags and "c" not in flags and highlighted:
+                                line_match.append(f"{Fore.MAGENTA}{file}{Style.RESET_ALL}: {highlighted}")
+                                
+                            # If only one file, do not include that file name in output
+                            elif len(files) == 1 and "l" not in flags and "c" not in flags and highlighted:
+                                line_match.append(f"{highlighted}")
+                                
+                except PermissionError:
+                    output["error"] = f"{Fore.RED}Permission denied: cannot access {file}{Style.RESET_ALL}"
+                    return output
                             
-                        # If multiple files, include the file name in output
-                        if len(files) > 1 and "l" not in flags and "c" not in flags and highlighted not in line_match:
-                            line_match.append(f"{Fore.MAGENTA}{file}{Style.RESET_ALL}: {highlighted}")
-                            
-                        # If only one file, do not include that file name in output
-                        elif len(files) == 1 and "l" not in flags and "c" not in flags and highlighted not in line_match:
-                            line_match.append(f"{highlighted}")
-                        
-            # Error if one of the files does not exist
-            else:
-                output["error"] = f"{Fore.RED}Error: {file} is not a file.{Style.RESET_ALL} \nRun 'grep --help' for more info."
-                return output
+        # Error if one of the files does not exist
+        else:
+            output["error"] = f"{Fore.RED}Error: {file} is not a file.{Style.RESET_ALL} \nRun 'grep --help' for more info."
+            return output
                         
     # If -l flag, only return files that matched
     if file_match:
@@ -1561,7 +1583,7 @@ def grep(parts):
             
     # If line_match was filled, return it
     elif line_match:
-        output["output"] = "".join(line_match)
+        output["output"] = "".join(line_match).rstrip("\n")
                         
     else:
         output["error"] = f"{Fore.YELLOW}No matches found for '{pattern}'{Style.RESET_ALL}"
@@ -1652,43 +1674,60 @@ def wc(parts):
         # Example: ls | wc -w or wc -l fruit.txt
         if flags and path:
             
-            # Get countswhat
-            with open(path, 'r') as file:
-                for line in file:
-                    if "l" in flags:
-                        line_count += 1
-                    if "w" in flags:
-                        words = line.split()
-                        word_count += len(words)
+            # Get counts depending on flags
+            try:
+                with open(path, 'r') as file:
+                    for line in file:
+                        if "l" in flags:
+                            line_count += 1
+                        if "w" in flags:
+                            words = line.split()
+                            word_count += len(words)
+                
+                # Getting correct data to output | Code from ChatGPT           
+                output_values = []
+                output_values.append(str(line_count) if "l" in flags else None)
+                output_values.append(str(word_count) if "w" in flags else None)
+                                
+                # Store results to output and return | Code from ChatGPT
+                output["output"] = " ".join(filter(None, output_values))
+                return output
             
-            # Getting correct data to output | Code from ChatGPT           
-            output_values = []
-            output_values.append(str(line_count) if "l" in flags else None)
-            output_values.append(str(word_count) if "w" in flags else None)
-                            
-            # Store results to output and return | Code from ChatGPT
-            output["output"] = " ".join(filter(None, output_values))
-            return output
+            except PermissionError:
+                output["error"] = f"{Fore.RED}Permission denied: cannot access {item}{Style.RESET_ALL}"
+                return output
+            except FileNotFoundError:
+                output["error"] = f"{Fore.RED}Error: {item}: No such file or directory.{Style.RESET_ALL}"
+                return output
             
         # If user ran wc with flags
         # Example wc fruit.txt or ls | wc
         if not flags and path:
             
             # Get counts
-            with open(path, 'r') as file:
-                for line in file:
-                    line_count += 1
-                    words = line.split()
-                    word_count += len(words)
-                    char_count += len(line)
-                            
-            # Store results to output and return
-            output["output"] = f"{line_count} {word_count} {char_count} {input or params}"
-            return output            
+            try:
+                with open(path, 'r') as file:
+                    for line in file:
+                        line_count += 1
+                        words = line.split()
+                        word_count += len(words)
+                        char_count += len(line)
+                                
+                # Store results to output and return
+                output["output"] = f"{line_count} {word_count} {char_count} {input or params}"
+                return output 
+            
+            except PermissionError:
+                output["error"] = f"{Fore.RED}Permission denied: cannot access {item}{Style.RESET_ALL}"
+                return output
+            except FileNotFoundError:
+                output["error"] = f"{Fore.RED}Error: {item}: No such file or directory.{Style.RESET_ALL}"
+                return output
+                           
             
     # Determine if item is a string
     elif isinstance(item, str) and input and not params:
-
+        
         # Removes characters used to color text
         ansi_escape = re.compile(r'\x1b\[[0-9;]*m')
         item = ansi_escape.sub('', item)
@@ -1749,7 +1788,6 @@ def wc(parts):
             if len(lines) > 1:
                 for line in lines:
                     for words in line.split():
-                        print(words)
                         word_count += 1
                         
             else:
@@ -1764,7 +1802,7 @@ def wc(parts):
     
     # item was not a string or file
     else:
-        output["error"] = f"{Fore.RED}Error: {item}: No such file or directory.{Style.RESET_ALL}\nRun 'wc --help' for more info."
+        output["error"] = f"{Fore.RED}Error: {item}: No such file.{Style.RESET_ALL}\nRun 'wc --help' for more info."
         return output
 
 def sort(parts):
@@ -1833,30 +1871,37 @@ def sort(parts):
         if path:
             
             # From Chat
-            with open(path, 'r') as file_:
-                for line in file_:
-                    if line.endswith("\n"):
-                        sorted_list.append(line)
-                    else:
-                        line = line + "\n"
-                        sorted_list.append(line)
+            try:
+                with open(path, 'r') as file_:
+                    for line in file_:
+                        # From Chat
+                        if line.endswith("\n"):
+                            sorted_list.append(line)
+                        else:
+                            line = line + "\n"
+                            sorted_list.append(line)
+                        
+                # Sort alphebetically
+                if flags in ["-a", None]:
+                    sorted_list.sort()
+                
+                # Reverse list
+                elif flags == "-r":
+                    sorted_list.sort(reverse=True)
                     
-            # Sort alphebetically
-            if flags in ["-a", None]:
-                sorted_list.sort()
-            
-            # Reverse list
-            elif flags == "-r":
-                sorted_list.sort(reverse=True)
+                # Sort numerically
+                elif flags == "-n":
+                    
+                    try:
+                        sorted_list.sort(key=int)
+                    except ValueError:
+                        output["error"] = f"{Fore.RED}Error: 'sort -n' can only be used on files with numbers.{Style.RESET_ALL} \nRun 'sort --help' for more info."
+                        return output
+                    
+            except PermissionError:
+                output["error"] = f"{Fore.RED}Permission denied: cannot access {data}{Style.RESET_ALL}"
+                return output
                 
-            # Sort numerically
-            elif flags == "-n":
-                
-                try:
-                    sorted_list.sort(key=int)
-                except ValueError:
-                    output["error"] = f"{Fore.RED}Error: 'sort -n' can only be used on files with numbers.{Style.RESET_ALL} \nRun 'sort --help' for more info."
-                    return output
                 
         # Error if path not found
         else:
@@ -1869,7 +1914,7 @@ def sort(parts):
         return output
     
     # if source exists and is a string
-    elif isinstance(data, str):
+    elif isinstance(data, str) and not params:
         
         # Removes characters used to color text in order to properly sort
         ansi_escape = re.compile(r'\x1b\[[0-9;]*m')
@@ -1904,21 +1949,16 @@ def sort(parts):
             
         # Sort numerically
         if flags == "-n":
-            try:
-                sorted_list.sort(key=int)
-            except ValueError:
-                output["error"] = f"{Fore.RED}Error: 'sort -n' can only be used on files with numbers.{Style.RESET_ALL} \nRun 'sort --help' for more info."
-                return output              
+            sorted_list.sort(key=int)              
         
         # Converting to string and returning
         result = "\n".join(sorted_list)
         output["output"] = result
         return output
     
-    # Data was not a string or file
     else:
         output["error"] = f"{Fore.RED}Error: {data} could not be properly handled.{Style.RESET_ALL} \nRun 'sort --help' for more info."
-        return output 
+        return output   
 
 def chmod(parts):
     '''
