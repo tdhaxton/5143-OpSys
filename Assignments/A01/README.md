@@ -99,12 +99,30 @@ Run the `shell.py` file and use the following commands...
 | `[program] < file`    |                                                     | Harika   |
 | `sort`                | Sort data. Includes flags: -n, -r, -a               | Cooper   |
 
-### Help
+## Help
 
 - Every command will print help information if the user passes `--help` as an argument.
 
-## Non-Working Components:
-- All components have been inplemented to the extent of the scope of our project
+## Commands that malfunctioned:
+|      Command         |        Error           |                         Solution                              |
+|----------------------|------------------------|---------------------------------------------------------------|
+| _cd ~_               |   broke the shell      | If statement containing piping syntax was misaligned in code  |
+| cat bacon.txt | sort |   error with piping    | "                                                           " |
+| grep as as file.txt  |   grep processing multiple patterns |   only allow for a single patterns without flag  |
+| less h q / ?         |   breaks the shell     | added help buffer/created display buffer copy earlier to allow display  buffer reference swap | 
+
+
+## Highs and Lows:
+- Cooper
+  - Highs
+    - The first time piping worked
+    - Finally figuring out the 'grep' command
+    - When our second presentation went well
+    - Adding the extra features and having them work
+  - Lows
+    - Grep command kept failing
+    - Figuring out the arrow keys
+    - When the first presentation didn't go as expected
 
 ## Extras
 - Color list contents if they are directory (blue) or executable (green)
