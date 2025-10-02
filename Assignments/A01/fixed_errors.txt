@@ -7,5 +7,5 @@ _cd ~_               |   broke the shell                        |   If statement
 ll                   |   broke the shell                        |   "                                                           "
 cat bacon.txt | sort |   error with piping                      |   "                                                           "
 head -n10            |   needs to be a space between -n and 10  |   TBD
-
+less h q / ?         |   breaks the shell                       |   added help buffer/created display buffer copy earlier to allow display buffer reference swap 
 
