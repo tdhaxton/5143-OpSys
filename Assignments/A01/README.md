@@ -113,7 +113,7 @@ Run the `shell.py` file and use the following commands...
 
 
 ## Highs and Lows:
-- Cooper
+- Cooper Wolf
   - Highs
     - The first time piping worked
     - Finally figuring out the 'grep' command
