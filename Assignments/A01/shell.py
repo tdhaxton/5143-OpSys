@@ -2137,8 +2137,13 @@ def more(parts):
                         display_buffer.append(line)
             except FileNotFoundError:
                 output["error"] = f"Error: File {params} not found."
+                return output
             except Exception as e:
-                output["error"] = f"An unexpected error occurred: {e}"  
+                output["error"] = f"An unexpected error occurred: {e}"
+                return output
+            except PermissionError:
+                output["error"] = f"Permission denied"
+                return output  
             
         else:
             output["error"] = f"Error: {file} could not be found. \nRun 'more --help' for more info."
@@ -2218,7 +2223,7 @@ def forward_search(disp_buf, view_start, pattern, m):
 
 def backward_search(disp_buf, view_start, pattern, m):
     '''
-    works with less command to perform backward search. Takes the display buffer, start position, and user input pattern and searches backward within the document for in the input patter
+    works with less command to perform backward search. Takes the display buffer, start position, and user input pattern and searches backward within the document for in the input pattern
     '''
     # takes input pattern and compiles it for variable storage
     regex = re.compile(pattern, re.IGNORECASE)
@@ -2235,7 +2240,8 @@ def backward_search(disp_buf, view_start, pattern, m):
 def highlight_pattern(m, d_b, pattern):
     # loops through list
     for match in m:
-        # Replaces all input pattern matches with yellow font. Each match in list m is an index in the display buffer, so set the value data type to int and substitute the input pattern in the line with the pattern in yellow font
+        # Replaces all input pattern matches with yellow font. Each match in list m is an index in the display buffer, 
+        # so set the value data type to int and substitute the input pattern in the line with the pattern in yellow font
         d_b[int(match)] = re.sub(re.escape(pattern), f"{Fore.YELLOW}{pattern}{Style.RESET_ALL}", d_b[int(match)])
     return d_b
 
@@ -2363,8 +2369,13 @@ def less(parts, old_settings):
                         display_buffer.append(line)
             except FileNotFoundError:
                 output["error"] = f"Error: File {params} not found."
+                return output
             except Exception as e:
-                output["error"] = f"An unexpected error occurred: {e}"  
+                output["error"] = f"An unexpected error occurred: {e}"
+                return output
+            except PermissionError:
+                output["error"] = f"Permission denied."
+                return output 
             
         else:
             output["error"] = f"Error: {file} could not be found. \nRun 'more --help' for more info."
@@ -2381,7 +2392,10 @@ def less(parts, old_settings):
     # less command user input prompt initialization
     l_cmd = ""
     # stores display buffer for reset
-    old_buff = display_buffer
+    orig_buff = display_buffer.copy()
+    # buffer to hold help docstring
+    help_buffer = []
+    help_buffer.extend(less.__doc__.splitlines())
     while True:
         # clear the screen
         os.system("clear")
@@ -2396,9 +2410,7 @@ def less(parts, old_settings):
         key = getch()
         # help menu
         if key in ("h", "H"):
-            orig_buff = display_buffer.copy()
-            display_buffer.clear()
-            display_buffer.extend(less.__doc__.splitlines())
+            display_buffer = help_buffer
             showing_help = True
         # quit to shell
         elif key in ("q", "Q", "ZZ"):
@@ -2436,8 +2448,8 @@ def less(parts, old_settings):
             viewport_start = len(display_buffer) - lines - 1
         # reset buffer display
         elif key in ("r", "\x12", "\x0c"):
-            if old_buff:
-                display_buffer = old_buff
+            if orig_buff:
+                display_buffer = orig_buff
             else:
                 pass
         # forward search logic
@@ -2455,7 +2467,7 @@ def less(parts, old_settings):
                 result = forward_search(display_buffer, viewport_start, results["pattern"], matches)
             # if result is valid, set display buffer to original buffer, call highlight pattern function and update display buffer, and set viewport start index to the first match in the matches list
             if result:
-                display_buffer = old_buff
+                display_buffer = orig_buff
                 display_buffer = highlight_pattern(matches, display_buffer, results["pattern"])
                 viewport_start = int(matches[0])
         # backward search logic
@@ -2472,7 +2484,7 @@ def less(parts, old_settings):
             result = backward_search(display_buffer, viewport_start, results["pattern"], matches)
             # if result is valid, set display buffer to original buffer, call highlight pattern function and update display buffer, and set viewport start index to the first match in the matches list
             if result:
-                display_buffer = old_buff
+                display_buffer = orig_buff
                 display_buffer = highlight_pattern(matches, display_buffer, results["pattern"])
                 viewport_start = int(matches[0])
         # passes through arrow key escape sequence (\033) and Control Sequence Indidator ([) to value (A: Up, B: Down, C: Right, or D: Left). Up sets view to top of page, Down advances one window, Left moves view one-half window left and Right moves view one-half window right
