@@ -1569,11 +1569,11 @@ def grep(parts):
                                 count_match += 1
                                 
                             # If multiple files, include the file name in output
-                            if len(files) > 1 and "l" not in flags and "c" not in flags and highlighted and highlighted not in line_match:
+                            if len(files) > 1 and "l" not in flags and "c" not in flags and highlighted:
                                 line_match.append(f"{Fore.MAGENTA}{file}{Style.RESET_ALL}: {highlighted}")
                                 
                             # If only one file, do not include that file name in output
-                            elif len(files) == 1 and "l" not in flags and "c" not in flags and highlighted not in line_match and highlighted:
+                            elif len(files) == 1 and "l" not in flags and "c" not in flags and highlighted:
                                 line_match.append(f"{highlighted}")
                                 
                 except PermissionError:
