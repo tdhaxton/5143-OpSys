@@ -109,7 +109,7 @@ Run the `shell.py` file and use the following commands...
 | _cd ~_               |   broke the shell      | If statement containing piping syntax was misaligned in code  |
 | cat bacon.txt | sort |   error with piping    | "                                                           " |
 | grep as as file.txt  |   grep processing multiple patterns |   only allow for a single patterns without flag  |
-| less h q / ?         |   breaks the shell     | added help buffer and copied display buffer earlier to allow display buffer reference swap | 
+| less function search after invoking help | broke the shell | added help buffer and copied display buffer earlier to allow display buffer reference swap | 
 
 
 ## Highs and Lows:
