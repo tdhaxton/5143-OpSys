@@ -109,7 +109,7 @@ Run the `shell.py` file and use the following commands...
 | _cd ~_               |   broke the shell      | If statement containing piping syntax was misaligned in code  |
 | cat bacon.txt | sort |   error with piping    | "                                                           " |
 | grep as as file.txt  |   grep processing multiple patterns |   only allow for a single patterns without flag  |
-| less h q / ?         |   breaks the shell     | added help buffer/created display buffer copy earlier to allow display  buffer reference swap | 
+| less h q / ?         |   breaks the shell     | added help buffer and copied display buffer earlier to allow display buffer reference swap | 
 
 
 ## Highs and Lows:
@@ -123,6 +123,16 @@ Run the `shell.py` file and use the following commands...
     - Grep command kept failing
     - Figuring out the arrow keys
     - When the first presentation didn't go as expected
+
+- Tim Haxton
+  - Highs
+    - Making the more function work
+    - Figuring out the search function within less
+    - Implementing concatenation correctly on the first try
+    - Troubleshooting and correcting issues found the morning before our first presentation
+  - Lows
+    - Every time I had to ask ChatGPT to help me figure why a piece of code wasn't working the way I had envisioned
+    - Every time, even after that, that code I pushed still didn't work correctly
 
 ## Extras
 - Color list contents if they are directory (blue) or executable (green)
