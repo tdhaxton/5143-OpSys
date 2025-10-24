@@ -52,7 +52,7 @@ def load_processes_from_json(filename="generated_processes.json", limit=None):
                     {"io": {"type": b["io"]["type"], "duration": b["io"]["duration"]}}
                 )
 
-        proc = Process(pid=p["pid"], bursts=bursts, priority=p["priority"])
+        proc = Process(pid=p["pid"], bursts=bursts, priority=p["priority"], arrival_time=p["arrival_time"])
         processes.append(proc)
 
     return processes
@@ -113,6 +113,9 @@ if __name__ == "__main__":
     # Number of CPUs and IO devices
     cpus = args.get("cpus", 1)
     ios = args.get("ios", 1)
+    
+    # List to hold all processes
+    holding_list = []
 
     # Run the simulation
     clock = Clock()
@@ -120,15 +123,10 @@ if __name__ == "__main__":
 
     # Load processes from JSON file
     processes = load_processes_from_json(
-        f"./job_jsons/process_file_{str(file_num).zfill(4)}.json", limit=limit
-    )
+        f"./job_jsons/process_file_{str(file_num).zfill(4)}.json", limit=limit)
 
     # Initialize scheduler and add processes
-    sched = Scheduler(num_cpus=cpus, num_ios=ios, verbose=False)
-
-    # Add processes to scheduler
-    for p in processes:
-        sched.add_process(p)
+    sched = Scheduler(num_cpus=cpus, num_ios=ios, verbose=False, processes=processes)
 
     # Run the scheduler
     sched.run()
@@ -136,7 +134,7 @@ if __name__ == "__main__":
     # Print final log and stats
     print("\n--- Final Log ---")
     print(sched.timeline())
-    print(f"\nTime elapsed: {sched.clock.now()}")
+    print(f"\nTime elapsed: {sched.clock.now() - 1}")
     print(f"Finished: {[p.pid for p in sched.finished]}")
 
     # Export structured logs

@@ -60,6 +60,40 @@ def generate_io_burst(user_class):
     return {"type": io_type, "duration": duration}
 
 
+def hybrid_arrivals(n, p_batch=0.4, centers=None, sigma=5, mean_inter=15, std_inter=3):
+    """
+    Generate hybrid-style process arrival times:
+    - Some processes arrive in bursts near defined centers (batch arrivals)
+    - Others arrive in a stream spaced by mean_inter ± std_inter
+    """
+    if centers is None:
+        centers = [10, 50, 100]
+
+    # Generate stream-style interarrival times
+    inter_arrivals = [max(1, int(round(random.gauss(mean_inter, std_inter)))) for _ in range(n * 2)]
+
+    # Convert interarrivals into cumulative times for realism
+    stream_times = []
+    current_time = 0
+    for inter in inter_arrivals:
+        current_time += inter
+        stream_times.append(current_time)
+    stream = iter(stream_times)
+
+    # Build hybrid list
+    times = []
+    for _ in range(n):
+        if random.random() < p_batch:
+            # Batched (clustered) arrival
+            c = random.choice(centers)
+            times.append(max(0, int(round(random.gauss(c, sigma)))))
+        else:
+            # Streamed arrival (spaced apart)
+            times.append(next(stream))
+
+    return sorted(times)
+
+
 # ----------------------------------------------------------
 # Generate one process until CPU budget is consumed
 # ----------------------------------------------------------
@@ -77,10 +111,6 @@ def generate_process(user_class, max_bursts=20):
     budget_mean = user_class.get("cpu_budget_mean", 50)
     budget_std = user_class.get("cpu_budget_stddev", 10)
     cpu_budget = max(5, int(random.gauss(budget_mean, budget_std)))
-
-    # arrival time for process; needs to be [0, max_time]
-    arrival_time = 0
-    # arrival_time = random.randint(0, 500)
 
     bursts = []
     cpu_used = 0
@@ -100,11 +130,14 @@ def generate_process(user_class, max_bursts=20):
             if random.random() < user_class["io_profile"]["io_ratio"]:
                 bursts.append({"io": generate_io_burst(user_class)})
             burst_count += 1
-
+            
+    # Assigning arrival time to each process
+    #arrival_time = random.randint(0,75)
+    
     return {
         "pid": ppid,
-        "arrival_time": arrival_time,
         "class_id": user_class["class_id"],
+        #"arrival_time": arrival_time,
         "priority": priority,
         "cpu_budget": cpu_budget,
         "cpu_used": cpu_used,
@@ -120,10 +153,14 @@ def generate_processes(user_classes, n=100):
 
     total_rate = sum(cls["arrival_rate"] for cls in user_classes)
     weights = [cls["arrival_rate"] / total_rate for cls in user_classes]
+    
+    arrival_times = hybrid_arrivals(n)
 
-    for _ in range(n):
+    for i in range(n):
         user_class = random.choices(user_classes, weights=weights, k=1)[0]
         process = generate_process(user_class)
+        
+        process["arrival_time"] = arrival_times[i]
         processes.append(process)
 
     return processes
@@ -147,8 +184,6 @@ if __name__ == "__main__":
     # Pretty print
     for p in processes:
         print(json.dumps(p, indent=2))
-
-    # get_outfile_id
 
     # Save to file
     out_file = Path(f"../job_jsons/process_file_{generate_outfile_id()}.json")

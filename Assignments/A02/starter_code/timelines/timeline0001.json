@@ -1,6 +1,6 @@
 [
   {
-    "time": 0,
+    "time": 11,
     "event": "1 added to ready queue",
     "event_type": "enqueue",
     "process": "1",
@@ -15,7 +15,7 @@
     ]
   },
   {
-    "time": 0,
+    "time": 16,
     "event": "2 added to ready queue",
     "event_type": "enqueue",
     "process": "2",
@@ -30,7 +30,7 @@
     ]
   },
   {
-    "time": 0,
+    "time": 36,
     "event": "3 added to ready queue",
     "event_type": "enqueue",
     "process": "3",
@@ -45,7 +45,7 @@
     ]
   },
   {
-    "time": 0,
+    "time": 54,
     "event": "4 added to ready queue",
     "event_type": "enqueue",
     "process": "4",
@@ -60,7 +60,7 @@
     ]
   },
   {
-    "time": 0,
+    "time": 66,
     "event": "5 added to ready queue",
     "event_type": "enqueue",
     "process": "5",
@@ -75,7 +75,7 @@
     ]
   },
   {
-    "time": 0,
+    "time": 83,
     "event": "6 added to ready queue",
     "event_type": "enqueue",
     "process": "6",
@@ -90,7 +90,7 @@
     ]
   },
   {
-    "time": 0,
+    "time": 96,
     "event": "7 added to ready queue",
     "event_type": "enqueue",
     "process": "7",
@@ -105,7 +105,7 @@
     ]
   },
   {
-    "time": 0,
+    "time": 97,
     "event": "8 added to ready queue",
     "event_type": "enqueue",
     "process": "8",
@@ -120,7 +120,7 @@
     ]
   },
   {
-    "time": 0,
+    "time": 106,
     "event": "9 added to ready queue",
     "event_type": "enqueue",
     "process": "9",
@@ -135,7 +135,7 @@
     ]
   },
   {
-    "time": 0,
+    "time": 107,
     "event": "10 added to ready queue",
     "event_type": "enqueue",
     "process": "10",

@@ -28,7 +28,7 @@ class Scheduler:
         export_json(filename): export the structured log to a JSON file
         export_csv(filename): export the structured log to a CSV file"""
 
-    def __init__(self, num_cpus=1, num_ios=1, verbose=True):
+    def __init__(self, num_cpus=1, num_ios=1, verbose=True, processes=None):
         self.clock = Clock()  # shared clock instance for all components Borg pattern
 
         # deque (double ended queue) for efficient pops from left
@@ -47,6 +47,7 @@ class Scheduler:
         self.log = []  # human-readable + snapshots
         self.events = []  # structured log for export
         self.verbose = verbose  # if True, print log entries to console
+        self.processes = processes
 
     def add_process(self, process):
         """
@@ -58,9 +59,8 @@ class Scheduler:
 
         process.state = "ready"  # sets the current process state to ready
 
-        # adds the process to the end of the ready queue if it has arrived
-        if self.clock == process.arrival_time:
-            self.ready_queue.append(process)
+        # Add process to ready queue
+        self.ready_queue.append(process)
 
         # Log the event
         self._record(
@@ -257,6 +257,35 @@ class Scheduler:
         Run the scheduler until all processes are finished
         Returns: None
         """
+        
+        # Storing total number of processes
+        process_counter = len(self.processes)
+        print(f"Total number of processes to schedule: {process_counter}")
+        
+        # Looping while there are sitll processes to be added
+        while self.processes:
+            
+            # Getting processes that arrive at the current time
+            arriving_processes = [p for p in self.processes if p.arrival_time == self.clock.now()]
+            
+            # Looping through arriving processes to add them to ready queue
+            for process in arriving_processes:
+                self.add_process(process)
+                self.processes.remove(process)
+                
+            # If there are processes to run or IO or any CPU/IO is busy, step    
+            if (
+                self.ready_queue
+                or self.wait_queue
+                or any(cpu.is_busy() for cpu in self.cpus)
+                or any(dev.is_busy() for dev in self.io_devices)
+                ):
+
+                self.step()
+                
+            # If no processes are ready or waiting and all CPUs/IOs are idle, just tick the clock
+            else:
+                self.clock.tick()
 
         # Continue stepping while there are processes in ready/wait queues
         # or any CPU/IO device is busy
@@ -265,6 +294,7 @@ class Scheduler:
             or self.wait_queue
             or any(cpu.is_busy() for cpu in self.cpus)
             or any(dev.is_busy() for dev in self.io_devices)
+            and len(self.finished) != process_counter
         ):
             self.step()
 

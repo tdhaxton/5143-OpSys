@@ -5,7 +5,6 @@ class Process:
         pid: unique process ID
         bursts: list of bursts [{"cpu": X}, {"io": {"type": T, "duration": D}}, ...]
         priority: scheduling priority (0 = highest)
-        arrival_time: time process arrives to ready queue
         state: current state ("new", "ready", "running", "waiting", "finished")
     Methods:
         current_burst(): returns the current burst or None if done
@@ -15,12 +14,12 @@ class Process:
     """
 
     def __init__(self, pid, bursts, priority=0, arrival_time=0):
-        """Initialize process with pid, bursts, priority, and arrival time"""
+        """Initialize process with pid, bursts, and priority"""
         self.pid = pid
         self.bursts = bursts[:]  # [{"cpu": X}, {"io": {...}}, ...]
         self.priority = priority
-        self.arrival_time = arrival_time
         self.state = "new"
+        self.arrival_time = arrival_time
 
     def current_burst(self):
         """Get the current burst"""
