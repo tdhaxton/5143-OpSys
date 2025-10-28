@@ -4,7 +4,7 @@ from process import Process
 import sys
 from utils.clock import Clock
 from scheduler_base import Scheduler
-
+from utils.rr import RoundRobinScheduler
 
 # ---------------------------------------
 # Load JSON into Process objects
