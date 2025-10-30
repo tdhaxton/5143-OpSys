@@ -328,3 +328,12 @@ class Scheduler:
             writer.writerows(self.events)
         if self.verbose:
             print(f"✅ Timeline exported to {filename}")
+
+    def snapshot(self):
+        return {
+            "clock": self.clock.now(),
+            "ready": [proc.pid for proc in self.ready_queue],
+            "wait": [proc.pid for proc in self.wait_queue],
+            "cpu": [cpu.current.pid if cpu.current else None for cpu in self.cpus],
+            "io": [dev.current.pid if dev.current else None for dev in self.io_devices]
+        }
