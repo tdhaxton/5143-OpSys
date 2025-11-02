@@ -1,10 +1,13 @@
+import os, sys
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+
+from schedulers.base import Scheduler
+from schedulers.rr import RoundRobinScheduler
 import json
 # import utils
 from process import Process
-import sys
 from utils.clock import Clock
-from scheduler_base import Scheduler
-from utils.rr import RoundRobinScheduler
+
 
 # ---------------------------------------
 # Load JSON into Process objects
