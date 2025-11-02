@@ -49,22 +49,22 @@ The goal of this project is to model how operating systems manage CPU and I/O sc
 
 A02/
 ├── schedulers/
-│   ├── __init__.py
-│   ├── base.py
-│   └── rr.py
+│ ├── init.py
+│ ├── base.py
+│ └── rr.py
 ├── starter_code/
-│   ├── main.py
-│   ├── process.py
-│   ├── utils/
-│   │   ├── clock.py
-│   │   ├── cpu.py
-│   │   ├── iodevice.py
-│   │   └── ...
-│   ├── job_jsons/
-│   └── timelines/
+│ ├── main.py
+│ ├── process.py
+│ ├── utils/
+│ │ ├── clock.py
+│ │ ├── cpu.py
+│ │ ├── iodevice.py
+│ │ └── ...
+│ ├── job_jsons/
+│ └── timelines/
 ├── gen_jobs/
-│   ├── fid
-│   ├── generate_job.py
-│   └── job_classes.json
+│ ├── fid
+│ ├── generate_job.py
+│ └── job_classes.json
 ├── config.py
 └── README.md
