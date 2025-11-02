@@ -43,28 +43,3 @@ The goal of this project is to model how operating systems manage CPU and I/O sc
 | └── `job_classes.json` | Defines different process classes and workload profiles. |
 
 ---
-
-
-### Project Structure
-
-A02/
-├── schedulers/
-│ ├── init.py
-│ ├── base.py
-│ └── rr.py
-├── starter_code/
-│ ├── main.py
-│ ├── process.py
-│ ├── utils/
-│ │ ├── clock.py
-│ │ ├── cpu.py
-│ │ ├── iodevice.py
-│ │ └── ...
-│ ├── job_jsons/
-│ └── timelines/
-├── gen_jobs/
-│ ├── fid
-│ ├── generate_job.py
-│ └── job_classes.json
-├── config.py
-└── README.md
