@@ -7,7 +7,7 @@ import json
 # import utils
 from process import Process
 from utils.clock import Clock
-from schedulers import Scheduler, RoundRobinScheduler, ShortestJobFirst
+from schedulers import Scheduler, RoundRobinScheduler, ShortestJobFirst, ShortestRemainingTimeFirst
 
 
 # ---------------------------------------
@@ -153,6 +153,15 @@ if __name__ == "__main__":
     elif sceduler.lower() == "sjf":
         print("Using Shortest Job First")
         sched = ShortestJobFirst(
+            num_cpus=cpus,
+            num_ios=ios,
+            verbose=False,
+            processes=processes
+        )
+
+    elif sceduler.lower() == "srtf":
+        print("Using Shortest Remaining Time First")
+        sched = ShortestRemainingTimeFirst(
             num_cpus=cpus,
             num_ios=ios,
             verbose=False,
