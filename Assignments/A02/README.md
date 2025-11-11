@@ -10,10 +10,11 @@
 ## Overview
 This project simulates CPU and I/O scheduling to analyze how different scheduling algorithms perform under various workloads. The simulation generates random processes and evaluates them using multiple schedulers such as:
 
-- **FCFS (First-Come, First-Served)**
+- **First-Come, First-Served (FCFS)**
 - **Round Robin (RR)**
 - **Priority Scheduling**
-- *(and others as implemented)*
+- **Shortest Remaining Time First (SRTF)**
+- **Shortest Job First (SJF)**
 
 After running simulations, the program outputs results to compare metrics like waiting time, turnaround time, and throughput to determine which scheduler performs best under specific conditions.
 
