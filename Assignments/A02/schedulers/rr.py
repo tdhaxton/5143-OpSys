@@ -16,6 +16,12 @@ class RoundRobinScheduler(Scheduler):
         """
         Override step() to add Round Robin behavior (time quantum enforcement)
         """
+
+        for p in self.ready_queue:
+            p.wait_time += 1        # Increment wait time for processes in ready queue
+        for p in self.wait_queue:
+            p.io_time += 1          # Increment I/O time for processes in wait queue
+
         for cpu in self.cpus:
             proc = cpu.tick()
 
@@ -61,6 +67,8 @@ class RoundRobinScheduler(Scheduler):
                     )
                 else:
                     proc.state = "finished"
+                    proc.finish_time = self.clock.now()
+                    proc.turnaround_time = proc.finish_time - proc.arrival_time
                     self.finished.append(proc)
                     self._record(
                         f"{proc.pid} finished all bursts",
@@ -86,6 +94,8 @@ class RoundRobinScheduler(Scheduler):
                 else:
                     proc.state = "finished"
                     self.finished.append(proc)
+                    proc.finish_time = self.clock.now()
+                    proc.turnaround_time = proc.finish_time - proc.arrival_time
                     self._record(
                         f"{proc.pid} finished all bursts",
                         event_type="finished",
@@ -100,6 +110,11 @@ class RoundRobinScheduler(Scheduler):
                 # reset per-dispatch quantum accounting
                 setattr(proc, "quantum_used", 0)
                 cpu.assign(proc)
+                self.context_switches += 1
+                # Record process's first_run if it hasn't already been
+                if proc.first_run is None:
+                    proc.first_run = self.clock.now()
+                    proc.response_time = proc.first_run - proc.arrival_time
                 self._record(
                     f"{proc.pid} dispatched to CPU{cpu.cid}",
                     event_type="dispatch_cpu",

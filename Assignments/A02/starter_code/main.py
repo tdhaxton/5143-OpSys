@@ -248,6 +248,9 @@ if __name__ == "__main__":
     # Get count of generated jobs
     jobs_count = get_gen_jobs_count()
 
+    # Print scheduler stats
+    sched.print_scheduler_stats()
+
     # Export structured logs
     if file_num:
         sched.export_json(f"./timelines/timeline{str(timeline_count).zfill(4)}_{scheduler}_{file_num}.json")
