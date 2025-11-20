@@ -3,7 +3,7 @@ Left to do:
     1. Schedulers ✅
         -SRTF
         -Priority
-    2. Simulation
+    2. Simulation ✅
         - Will need to create script that will run a bunch of different simulations
         - with different parameters on different files, and output/display info
         - needed for calculations.
