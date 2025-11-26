@@ -148,6 +148,8 @@ if __name__ == "__main__":
     cpus = args.get("cpus", 1)
     ios = args.get("ios", 1)
     
+    show = args.get("show", False)
+    
     # Scheduler to use
     scheduler = args.get("sched", "fcfs")
 
@@ -237,10 +239,12 @@ if __name__ == "__main__":
     sched.run()
 
     # Print final log and stats
-    print("\n--- Final Log ---")
-    print(sched.timeline())
-    print(f"\nTime elapsed: {sched.clock.now() - 1}")
-    print(f"Finished: {[p.pid for p in sched.finished]}")
+    # If user wants to see timeline printed to console
+    if show:
+        print("\n--- Final Log ---")
+        print(sched.timeline())
+        print(f"\nTime elapsed: {sched.clock.now() - 1}")
+        print(f"Finished: {[p.pid for p in sched.finished]}")
 
     # Increment count of timelines
     timeline_count = increment_timeline_count()
@@ -249,7 +253,13 @@ if __name__ == "__main__":
     jobs_count = get_gen_jobs_count()
 
     # Print scheduler stats
-    sched.print_scheduler_stats()
+    stats = sched.print_scheduler_stats()
+    print(stats)
+    
+    # Write stats to a text file
+    with open(f"FileNum{file_num}_Analysis.txt", "a") as f:
+        f.write(stats)
+        f.write("\n\n")
 
     # Export structured logs
     if file_num:
