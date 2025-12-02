@@ -53,11 +53,11 @@ class Scheduler:
         self.total_time_run = 0     # total scheduler simulation time
         self.context_switches = 0   # number of context switches
         self.cpu_utilization = 0    # ratio of CPU time used to CPU time available
-        self.cpu_used = 0
-        self.cpu_available = 0
-        self.avg_waiting_time = 0
-        self.avg_turnaround_time = 0
-        self.avg_response_time = 0
+        self.cpu_used = 0           # integer value of CPU time used
+        self.cpu_available = 0      # integer value of CPU time available
+        self.avg_waiting_time = 0   # ratio of all process waiting times to the total number of processes
+        self.avg_turnaround_time = 0    # ratio of all process turnaround times to the total number of processes
+        self.avg_response_time = 0  # ratio of all process response times to the total number of processes
 
     def add_process(self, process):
         """
@@ -322,7 +322,7 @@ class Scheduler:
             and len(self.finished) != process_counter
         ):
             self.step()
-
+        # Otherwise compile stats for analysis
         else:
             for cpu in self.cpus:
                 self.cpu_used = cpu.busy
@@ -391,7 +391,11 @@ class Scheduler:
             )
 
     def print_scheduler_stats(self):
-        """Return and print scheduler statistics."""
+        """Return and print scheduler statistics.
+        Process File: #\n
+        Device Configuration (ie. CPU Heavy)\n
+        Processes: #\n
+        Arrival Times: Policy\n\n"""
         
         stats = (
             f"\n--- {self.name} Scheduler Statistics ---\n"
@@ -406,7 +410,11 @@ class Scheduler:
         return stats    # allows you to write it to file
     
     def print_scheduler_stats_csv(self):
-        """Return scheduler statistics as a dictionary for CSV purposes."""
+        """Return scheduler statistics as a dictionary for CSV purposes.
+        Process File: #\n
+        Device Configuration (ie. CPU Heavy)\n
+        Processes: #\n
+        Arrival Times: Policy\n\n"""
         
         stats = {
             "Scheduler": self.name,
