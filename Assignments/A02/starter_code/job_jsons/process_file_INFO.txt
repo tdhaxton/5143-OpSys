@@ -1,3 +1,93 @@
+Process file 0046 properties: 10 processes | Arrival times: flow | Device load cpu.
+
+Process file 0047 properties: 10 processes | Arrival times: batch | Device load cpu.
+
+Process file 0048 properties: 10 processes | Arrival times: hybrid | Device load cpu.
+
+Process file 0049 properties: 25 processes | Arrival times: flow | Device load cpu.
+
+Process file 0050 properties: 25 processes | Arrival times: batch | Device load cpu.
+
+Process file 0051 properties: 25 processes | Arrival times: hybrid | Device load cpu.
+
+Process file 0052 properties: 50 processes | Arrival times: flow | Device load cpu.
+
+Process file 0053 properties: 50 processes | Arrival times: batch | Device load cpu.
+
+Process file 0054 properties: 50 processes | Arrival times: hybrid | Device load cpu.
+
+Process file 0055 properties: 10 processes | Arrival times: flow | Device load io.
+
+Process file 0056 properties: 10 processes | Arrival times: batch | Device load io.
+
+Process file 0057 properties: 10 processes | Arrival times: hybrid | Device load io.
+
+Process file 0058 properties: 25 processes | Arrival times: flow | Device load io.
+
+Process file 0059 properties: 25 processes | Arrival times: batch | Device load io.
+
+Process file 0060 properties: 25 processes | Arrival times: hybrid | Device load io.
+
+Process file 0061 properties: 50 processes | Arrival times: flow | Device load io.
+
+Process file 0062 properties: 50 processes | Arrival times: batch | Device load io.
+
+Process file 0063 properties: 50 processes | Arrival times: hybrid | Device load io.
+
+Process file 0064 properties: 10 processes | Arrival times: flow | Device load net.
+
+Process file 0065 properties: 10 processes | Arrival times: batch | Device load net.
+
+Process file 0066 properties: 10 processes | Arrival times: hybrid | Device load net.
+
+Process file 0067 properties: 25 processes | Arrival times: flow | Device load net.
+
+Process file 0068 properties: 25 processes | Arrival times: batch | Device load net.
+
+Process file 0069 properties: 25 processes | Arrival times: hybrid | Device load net.
+
+Process file 0070 properties: 50 processes | Arrival times: flow | Device load net.
+
+Process file 0071 properties: 50 processes | Arrival times: batch | Device load net.
+
+Process file 0072 properties: 50 processes | Arrival times: hybrid | Device load net.
+
+Process file 0073 properties: 10 processes | Arrival times: flow | Device load dl.
+
+Process file 0074 properties: 10 processes | Arrival times: batch | Device load dl.
+
+Process file 0075 properties: 10 processes | Arrival times: hybrid | Device load dl.
+
+Process file 0076 properties: 25 processes | Arrival times: flow | Device load dl.
+
+Process file 0077 properties: 25 processes | Arrival times: batch | Device load dl.
+
+Process file 0078 properties: 25 processes | Arrival times: hybrid | Device load dl.
+
+Process file 0079 properties: 50 processes | Arrival times: flow | Device load dl.
+
+Process file 0080 properties: 50 processes | Arrival times: batch | Device load dl.
+
+Process file 0081 properties: 50 processes | Arrival times: hybrid | Device load dl.
+
+Process file 0082 properties: 10 processes | Arrival times: flow | Device load balanced.
+
+Process file 0083 properties: 10 processes | Arrival times: batch | Device load balanced.
+
+Process file 0084 properties: 10 processes | Arrival times: hybrid | Device load balanced.
+
+Process file 0085 properties: 25 processes | Arrival times: flow | Device load balanced.
+
+Process file 0086 properties: 25 processes | Arrival times: batch | Device load balanced.
+
+Process file 0087 properties: 25 processes | Arrival times: hybrid | Device load balanced.
+
+Process file 0088 properties: 50 processes | Arrival times: flow | Device load balanced.
+
+Process file 0089 properties: 50 processes | Arrival times: batch | Device load balanced.
+
+Process file 0090 properties: 50 processes | Arrival times: hybrid | Device load balanced.
+
 Process file 0001 properties: 10 processes | Arrival times: flow | Device load cpu.
 
 Process file 0002 properties: 10 processes | Arrival times: batch | Device load cpu.
