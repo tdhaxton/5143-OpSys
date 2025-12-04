@@ -3,7 +3,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 #from schedulers.base import Scheduler
 #from schedulers.rr import RoundRobinScheduler
-import json
+import json, csv
 # import utils
 from process import Process
 from utils.clock import Clock
@@ -173,6 +173,11 @@ if __name__ == "__main__":
         file_path = generate_jobs.generate_jobs_file(num_processes, arrival_time, device_load)
         processes = load_processes_from_json(file_path, limit=limit)
         
+        # Write info to job jsons info file
+        with open(f"./job_jsons/process_file_INFO.txt", "a") as f:
+            f.write(f"Process file 00{get_gen_jobs_count()} properties: {len(processes)} processes | Arrival times: {arrival_time} | Device load {device_load}.")
+            f.write("\n\n")
+        
     # Run the simulation
     clock = Clock()
     print(f"\n=== Simulation with {cpus} CPU(s) and {ios} IO device(s) ===")
@@ -255,22 +260,69 @@ if __name__ == "__main__":
     # Print scheduler stats
     stats = sched.print_scheduler_stats()
     print(stats)
+    
+    # Get scheduler stats in CSV format
+    csv_stats = sched.print_scheduler_stats_csv()
 
-    # Export structured logs
+    # User provided a file number
     if file_num:
-        # Write stats to a text file
-        with open(f"FileNum{file_num}_Analysis.txt", "a") as f:
-            f.write(stats)
-            f.write("\n\n")
+        
+        # Get path and check if file exists
+        path = f"./analysis/Jobs_{file_num}_Analysis.csv"
+        file_exists = os.path.exists(path)
+        write_header = not file_exists or os.path.getsize(path) == 0
+        
+        # Get process file information.
+        with open(f"./job_jsons/process_file_INFO.txt", "r") as file:
+            for line in file:
+                if f"Process file 00{file_num}" in line:
+                    parts = line.strip().split()
+                    proc_count = parts[4]
+                    arr_time = parts[9]
+                    dev_load = parts[13]
+                    
+        # Write CSV
+        with open(path, "a", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=csv_stats.keys())
+            
+            # Write header if file doesn't exist or is empty
+            if write_header:
+                f.write(f"Process File: {file_num},,,,,,,,\n")
+                f.write(f"Processes: {proc_count},,,,,,,,\n")
+                f.write(f"Device Load: {dev_load},,,,,,,,\n")
+                f.write(f"Arrival Times: {arr_time},,,,,,,,\n")
+                f.write(",,,,,,,,\n")
+                writer.writeheader()
+            writer.writerow(csv_stats)
 
+        # Export timeline files
         sched.export_json(f"./timelines/timeline{str(timeline_count).zfill(4)}_{scheduler}_{file_num}.json")
         sched.export_csv(f"./timelines/timeline{str(timeline_count).zfill(4)}_{scheduler}_{file_num}.csv")
+    
+    # User generated a new process file
     else:
-        # Write stats to a text file
-        with open(f"FileNum{jobs_count}_Analysis.txt", "a") as f:
-            f.write(stats)
-            f.write("\n\n")
+        
+        # Get path and check if file exists
+        path2 = f"./analysis/Jobs_{jobs_count}_Analysis.csv"
+        file_exists = os.path.exists(path2)
+        write_header = not file_exists or os.path.getsize(path2) == 0
+        
+        #Write CSV
+        with open(path2, "a", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=csv_stats.keys())
+            
+            # Write header if file doesn't exist or empty
+            if write_header:
+                f.write(f"Process File: {jobs_count},,,,,,,,\n")
+                f.write(f"Processes: {num_processes},,,,,,,,\n")
+                f.write(f"Device Load: {device_load},,,,,,,,\n")
+                f.write(f"Arrival Times: {arrival_time},,,,,,,,\n")
+                f.write(",,,,,,,,\n")
+                writer.writeheader()
+            writer.writerow(csv_stats)
 
+        # Export timeline files
         sched.export_json(f"./timelines/timeline{str(timeline_count).zfill(4)}_{scheduler}_{jobs_count}.json")
         sched.export_csv(f"./timelines/timeline{str(timeline_count).zfill(4)}_{scheduler}_{jobs_count}.csv")
+    
     clock.reset()

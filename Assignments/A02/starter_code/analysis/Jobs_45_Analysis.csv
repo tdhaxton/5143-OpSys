@@ -1,0 +1,7 @@
+Process File: 45,,,,,,,,
+Processes: 100,,,,,,,,
+Device Load: balanced,,,,,,,,
+Arrival Times: flow,,,,,,,,
+,,,,,,,,
+IO's,CPU's,Scheduler,Throughput,Average Response Time,Context Switches,CPU Utilization,Average Waiting Time,Average Turnaround Time
+2,2,Shortest Job First,0.03906,193.38,743,0.98,501.68,955.67
