@@ -53,26 +53,50 @@ def load_all_results():
     return df_all
 
 def plot_performance_by_device_load(df):
-    sns.barplot(data=df, x="scheduler", y="average_turnaround_time", hue="device_load")
+    plt.figure(figsize=(15,6))
+    ax = sns.barplot(data=df, x="scheduler", y="average_turnaround_time", hue="device_load")
+
+    for text in ax.texts:
+        text.set_rotation(30)
+        text.set_fontsize(8)
+
     plt.title("Scheduler Performance by Device Load")
     plt.savefig("performance_by_device_load.png", dpi=1200, bbox_inches="tight")
     plt.close()
 
 def plot_response_by_arrival_pattern(df):
-    sns.barplot(data=df, x="scheduler", y="average_response_time", hue="arrival_times")
+    plt.figure(figsize=(15,6))
+    ax = sns.barplot(data=df, x="scheduler", y="average_response_time", hue="arrival_times")
+
+    for text in ax.texts:
+        text.set_rotation(30)
+        text.set_fontsize(8)
+
     plt.title("Response Time under Different Arrival Patterns")
     plt.savefig("response_by_arrival_pattern.png", dpi=1200, bbox_inches="tight")
     plt.close()
 
 def plot_throughput_vs_process_count(df):
-    sns.lineplot(data=df, x="num_processes", y="throughput", hue="scheduler", marker="o")
+    plt.figure(figsize=(10,6))
+    ax = sns.lineplot(data=df, x="num_processes", y="throughput", hue="scheduler", marker="o")
+    
+    for text in ax.texts:
+        text.set_rotation(30)
+        text.set_fontsize(8)
+    
     plt.title("Throughput Scaling with Process Count")
     plt.savefig("throughput_vs_process_count.png", dpi=1200, bbox_inches="tight")
     plt.close()
 
 
 def plot_cpu_utilization_by_scheduler_and_device_count(df):
-    sns.barplot(data=df, x="scheduler", y="cpu_utilization", hue="cpu's")
+    plt.figure(figsize=(15,6))
+    ax = sns.barplot(data=df, x="scheduler", y="cpu_utilization", hue="cpu's")
+    
+    for text in ax.texts:
+        text.set_rotation(30)
+        text.set_fontsize(8)
+    
     plt.title("CPU Utilization with 1 vs 2 CPUs")
     plt.savefig("cpu_utilization_by_scheduler_and_device_count.png", dpi=1200, bbox_inches="tight")
     plt.close()
@@ -108,32 +132,44 @@ def best_scheduler_by_scenario_heatmap(df):
     df["scheduler"] = df["scheduler"].astype(str).str.strip()
 
     #get the best scheduler (lowest avg_turnaround) per (num_processes, device_load)
-    best = df.loc[df.groupby(["num_processes", "device_load"])["average_turnaround_time"].idxmin()].copy()
+    best_idx = df.groupby(["num_processes", "device_load"])["average_turnaround_time"].idxmin()
+    best = df.loc[best_idx].copy()
+
+    best["scheduler"] = best["scheduler"].astype(str).str.strip()
 
     # Map scheduler names to numeric codes for the heatmap
     sched_map = {
-        "First come First Serve": 0,
+        "First Come First Serve": 0,
         "Round Robin": 1,
         "Shortest Job First": 2,
         "Shortest Remaining Time First": 3,
-        "Priority Scheduler": 4,
+        "Priority": 4,
     }
 
-    best["sched_code"] = best["scheduler"].map(sched_map)
+    best["sched_code"] = best['scheduler'].map(sched_map)
+    # print(best[["scheduler", "sched_code"]].drop_duplicates())
 
+    # Numeric values for hte heatmap cells
     pivot_vals = best.pivot(
         index="num_processes",
         columns="device_load",
         values="sched_code",
     )
 
+    # Human-readable labels for annotation
     pivot_annot = best.pivot(
         index="num_processes",
         columns="device_load",
         values="scheduler",
     )
 
-    sns.heatmap(pivot_vals, annot=pivot_annot, fmt="", cmap="Set3")
+    plt.figure(figsize=(10,6))
+    ax = sns.heatmap(pivot_vals, annot=pivot_annot, fmt="", cmap="Set3")
+
+    for text in ax.texts:
+        text.set_rotation(30)
+        text.set_fontsize(8)
+
     plt.title("Best Scheduler for Each Scenario")
     plt.tight_layout()
     plt.savefig("best_scheduler_by_scenario.png", dpi=300, bbox_inches="tight")
@@ -141,7 +177,7 @@ def best_scheduler_by_scenario_heatmap(df):
 
 if __name__ == "__main__":
     df = load_all_results()
-    print(df.columns.tolist())
+    # print(df.columns.tolist())
     plot_performance_by_device_load(df)
     plot_response_by_arrival_pattern(df)
     plot_throughput_vs_process_count(df)
@@ -149,3 +185,4 @@ if __name__ == "__main__":
     # plot_round_robin_quantum_sensitivity(df)
     plot_overall_comparison(df)
     best_scheduler_by_scenario_heatmap(df)
+    # print(df["scheduler"].unique())
